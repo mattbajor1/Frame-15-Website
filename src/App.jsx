@@ -1,34 +1,28 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { Routes, Route, useLocation } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
+import Navbar from './components/Navbar';
+import Footer from './components/Footer';
+import Home from './pages/Home';
+import Projects from './pages/Projects';
+import About from './pages/About';
+import Contact from './pages/Contact';
 
 export default function App() {
+  const location = useLocation();
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center">
-      <motion.h1 
-        className="text-5xl font-bold mb-2"
-        initial={{ opacity: 0, y: -50 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1 }}
-      >
-        Hello World
-      </motion.h1>
-
-      <motion.p
-        className="text-xl opacity-80"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5, duration: 1 }}
-      >
-        Welcome to my cinematic portfolio website!
-      </motion.p>
-
-      <motion.button 
-        className="mt-8 px-6 py-3 bg-white text-black text-lg font-semibold rounded"
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        Explore More
-      </motion.button>
+    <div className="flex flex-col min-h-screen">
+      <Navbar />
+      {/* Animated page transitions */}
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
+          <Route path="/" element={<Home />} />
+          <Route path="/projects" element={<Projects />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
+        </Routes>
+      </AnimatePresence>
+      <Footer />
     </div>
   );
 }
