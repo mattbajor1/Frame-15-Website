@@ -1,56 +1,66 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useEffect, useState } from 'react';
+import { motion, useAnimation } from 'framer-motion';
 
 export default function Home() {
-  return (
-    <main className="pt-16"> {/* padding-top to offset fixed navbar */}
-      {/* Hero Section */}
-      <section className="h-screen relative">
-        {/* Use placeholder video if you don’t have a hero-reel.mp4 */}
-        <video
-          src="/videos/placeholder.mp4"
-          autoPlay muted loop playsInline
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center">
-          <motion.h1
-            className="text-6xl text-white font-extrabold mb-4"
-            initial={{ opacity: 0, y: -50 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1 }}
-          >
-            Welcome to Frame Fifteen
-          </motion.h1>
-          <motion.p
-            className="text-xl text-gray-200"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5, duration: 1 }}
-          >
-            Frame 15 don't give a FUCK 
-          </motion.p>
-        </div>
-      </section>
+  const numberControls = useAnimation();
+  const [flickerActive, setFlickerActive] = useState(true);
 
-      {/* Media Gallery */}
-      <section className="py-16 bg-gray-100">
-        <div className="max-w-6xl mx-auto px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {[1,2,3,4,5,6].map(i => (
-            <motion.div
+  useEffect(() => {
+    async function sequence() {
+      await numberControls.start({
+        filter: 'blur(0px)',
+        opacity: 1,
+        transition: { duration: 1.5 },
+      });
+      setFlickerActive(false);
+    }
+    sequence();
+  }, [numberControls]);
+
+  return (
+    <section id="home" className="relative h-screen">
+      {/* Fullscreen looping video */}
+      <video
+        src="/videos/hero.mp4"
+        autoPlay
+        muted
+        loop
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover filter grayscale brightness-75"
+      />
+      <div className="absolute inset-0 bg-black/60" />
+
+      {/* Centered logo + tagline, nudged up slightly */}
+      <div className="relative z-10 flex flex-col items-center justify-center h-full text-center px-4 space-y-6 transform -translate-y-12">
+        <div className="flex items-baseline space-x-2">
+          {['F','R','A','M','E'].map((letter, i) => (
+            <span
               key={i}
-              className="overflow-hidden rounded-lg shadow-lg"
-              whileHover={{ scale: 1.03 }}
+              className={`text-6xl font-extrabold text-white ${
+                flickerActive ? 'animate-flicker' : ''
+              }`}
             >
-              {/* Placeholder image if you don’t have project-i.jpg */}
-              <img
-                src="/images/placeholder.jpg"
-                alt={`Project ${i}`}
-                className="w-full h-64 object-cover"
-              />
-            </motion.div>
+              {letter}
+            </span>
           ))}
+          <motion.span
+            className="text-2xl font-bold text-gold"
+            style={{ filter: 'blur(8px)', opacity: 0.5 }}
+            animate={numberControls}
+          >
+            15
+          </motion.span>
         </div>
-      </section>
-    </main>
+
+        <motion.p
+          className="text-xl text-gray-200"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.8, duration: 1 }}
+        >
+          Crafting cinematic experiences.
+        </motion.p>
+      </div>
+    </section>
   );
 }
