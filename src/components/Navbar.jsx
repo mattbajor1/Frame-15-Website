@@ -1,29 +1,24 @@
 import React from 'react';
-import AnimatedLogo from './AnimatedLogo';
 
 export default function Navbar() {
-  const links = [
-    ['Home', '#home'],
-    ['Projects', '#projects'],
-    ['About', '#about'],
-    ['Contact', '#contact'],
+  const navItems = [
+    { label: 'Home', href: '#home' },
+    { label: 'Services', href: '#services' },
+    { label: 'Projects', href: '#projects' },
+    { label: 'About', href: '#about' },
+    { label: 'Contact', href: '#contact' },
   ];
 
   return (
-    <header className="fixed top-0 w-full bg-transparent z-30">
-      <div className="max-w-6xl mx-auto flex items-center justify-between p-4">
-        <a href="#home">
-          <AnimatedLogo text="frame" number="15" />
-        </a>
-        <nav className="space-x-6">
-          {links.map(([label, href]) => (
-            <a key={label} href={href}
-               className="text-white hover:text-gold transition-colors">
-              {label}
-            </a>
+    <nav className="fixed w-full bg-black bg-opacity-80 text-white z-50">
+      <div className="max-w-6xl mx-auto flex justify-between items-center p-4">
+        <a href="#home" className="font-bold text-2xl">Frame <span className="text-gold">15</span></a>
+        <div className="space-x-6">
+          {navItems.map(item => (
+            <a key={item.label} href={item.href} className="hover:text-gold transition">{item.label}</a>
           ))}
-        </nav>
+        </div>
       </div>
-    </header>
+    </nav>
   );
 }

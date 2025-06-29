@@ -1,25 +1,23 @@
-import React from 'react';
 import Navbar from './components/Navbar';
+import Footer from './components/Footer';
 import Home from './pages/Home';
+import Services from './pages/Services';
 import Projects from './pages/Projects';
 import About from './pages/About';
 import Contact from './pages/Contact';
-import Footer from './components/Footer';
 
 export default function App() {
   return (
-    <>
+    <div className="flex flex-col min-h-screen bg-black text-white scroll-smooth">
       <Navbar />
-<div className="p-8 bg-white">
-</div>
-
-      <main className="pt-16 bg-black text-white">
+      <main className="flex-grow">
         <Home />
+        <Services />
         <Projects />
         <About />
         <Contact />
       </main>
       <Footer />
-    </>
+    </div>
   );
 }
