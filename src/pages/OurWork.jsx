@@ -117,8 +117,7 @@ function CaseStudyModal({ project, onClose }) {
               <h3 className="font-display text-3xl uppercase tracking-wide text-yellow-600">{project.title}</h3>
               <p className="mt-2 text-gray-700">{project.desc}</p>
               <p className="mt-4 text-gray-700">
-                Creative brief, process, and outcome go here—concept → production → result. Add BTS stills or notes
-                that highlight decisions, constraints, and wins.
+                Description
               </p>
             </div>
           </motion.div>
