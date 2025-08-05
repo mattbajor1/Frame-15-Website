@@ -1,8 +1,10 @@
 import { useState } from "react";
+import RevealOnScroll from "./RevealOnScroll";
 
 const projects = [
-   { type: "video", title: "Nike Spec", vimeoId: "123456789" },
-  { type: "aerial", title: "Drone Reel", vimeoId: "987654321" },
+  { type: "video", title: "Renoun Doc", src: "/assets/nike.jpg" },
+  { type: "design", title: "Logo Work", src: "/assets/logo.jpg" },
+  { type: "aerial", title: "Drone Reel", src: "/assets/drone.jpg" },
 ];
 
 export default function PortfolioGrid() {
@@ -11,29 +13,38 @@ export default function PortfolioGrid() {
   const filtered = filter === "all" ? projects : projects.filter(p => p.type === filter);
 
   return (
-    <div className="px-6 py-12" id="portfolio">
-      <h2 className="text-4xl font-bold text-center mb-6">Our Work</h2>
-      <div className="flex justify-center space-x-4 mb-8">
+    <div className="bg-black text-white px-6 py-20" id="portfolio">
+      <RevealOnScroll className="text-center mb-12">
+        <h2 className="text-5xl font-bold uppercase tracking-wide text-gold">Our Work</h2>
+        <p className="mt-2 text-lg text-gray-400">Curated storytelling across formats</p>
+      </RevealOnScroll>
+
+      <RevealOnScroll className="flex justify-center space-x-4 mb-12">
         {["all", "video", "design", "aerial"].map(cat => (
           <button
             key={cat}
             onClick={() => setFilter(cat)}
-            className={`px-4 py-2 border rounded-full transition ${
-              filter === cat ? "bg-black text-white" : "bg-white text-black"
+            className={`px-6 py-2 uppercase border border-gold rounded-full font-semibold transition-all duration-300 hover:bg-gold hover:text-black ${
+              filter === cat ? "bg-gold text-black" : "text-gold"
             }`}
           >
             {cat}
           </button>
         ))}
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+      </RevealOnScroll>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10">
         {filtered.map((project, idx) => (
-          <div key={idx} className="relative group">
-            <img src={project.src} alt={project.title} className="w-full h-auto rounded-lg" />
-            <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white font-bold text-xl transition">
+          <RevealOnScroll key={idx} className="relative group rounded-xl overflow-hidden shadow-lg">
+            <img
+              src={project.src}
+              alt={project.title}
+              className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500"
+            />
+            <div className="absolute inset-0 bg-black bg-opacity-60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-2xl font-bold transition duration-300">
               {project.title}
             </div>
-          </div>
+          </RevealOnScroll>
         ))}
       </div>
     </div>
