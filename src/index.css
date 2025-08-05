@@ -1,4 +1,126 @@
 @import "tailwindcss";
 
-/* optional */
+/* Smooth scroll for in-page links */
 html { scroll-behavior: smooth; }
+
+
+/* Stronger film grain overlay */
+@keyframes grain-shift {
+  0% { background-position: 0 0; }
+  100% { background-position: 100% 100%; }
+}
+.grain-overlay {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='table' tableValues='0 0.9'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+  animation: grain-shift 6s steps(10) infinite;
+  pointer-events: none;
+}
+
+/* Desktop nav underline animation */
+.link-underline {
+  position: relative;
+}
+.link-underline::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -4px; /* slightly closer to text */
+  width: 0%;
+  height: 2px;
+  background: rgb(234 179 8); /* Tailwind yellow-500 */
+  transition: width .3s ease;
+}
+.link-underline:hover::after {
+  width: 100%;
+}
+/* ---------- Fonts ---------- */
+.font-display { font-family: "Bebas Neue", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif; }
+.font-body { font-family: "Inter", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif; }
+html, body { font-family: "Inter", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif; }
+
+/* ---------- Microinteractions ---------- */
+.btn-cinematic {
+  transform: translateZ(0);
+  transition: transform .24s ease, box-shadow .24s ease, background-color .24s ease, color .24s ease, border-color .24s ease, opacity .24s ease;
+  will-change: transform, box-shadow;
+}
+.btn-cinematic:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+}
+
+.card-cinematic {
+  transition: transform .35s ease, filter .35s ease, box-shadow .35s ease;
+  will-change: transform, filter;
+}
+.card-cinematic:hover {
+  transform: translateY(-4px) scale(1.01);
+  filter: brightness(1.12);
+  box-shadow: 0 16px 40px rgba(0,0,0,.45);
+}
+
+/* Tabs */
+.tab {
+  transition: transform .2s ease, background-color .2s ease, color .2s ease, border-color .2s ease, opacity .2s ease;
+  will-change: transform;
+}
+.tab:hover { transform: translateY(-1px); }
+.tab-active { transform: translateY(-2px); }
+
+/* Layered section title helper */
+.section-title {
+  position: relative;
+  display: inline-block;
+}
+.section-title .bg-word {
+  position: absolute;
+  inset: auto auto 0 50%;
+  transform: translate(-50%, 25%);
+  font-size: clamp(64px, 14vw, 220px);
+  line-height: .8;
+  letter-spacing: .05em;
+  color: rgba(255,255,255,.04);
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+}
+
+/* Ken Burns (for About expanded image) */
+@keyframes kenburns-pan {
+  0% { transform: scale(1.05) translate(0, 0); }
+  100% { transform: scale(1.15) translate(2%, -2%); }
+}
+.kenburns {
+  animation: kenburns-pan 18s ease-in-out infinite alternate;
+}
+
+/* --- Easter Egg: Logo glitch animation --- */
+.glitch {
+  animation: glitch 1s steps(2, jump-none) infinite;
+}
+@keyframes glitch {
+  0% { transform: skew(0deg); }
+  20% { transform: skew(5deg); filter: hue-rotate(90deg); }
+  40% { transform: skew(-5deg); filter: hue-rotate(180deg); }
+  60% { transform: skew(2deg); filter: hue-rotate(270deg); }
+  80% { transform: skew(-2deg); filter: hue-rotate(360deg); }
+  100% { transform: skew(0deg); filter: none; }
+}
+
+/* --- Easter Egg: Frame Mode overlay (press “F”) --- */
+.frame-mode-active::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background:
+    linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 40%, transparent 60%, rgba(0,0,0,0.4) 100%),
+    url('/images/film-grain.png');
+  background-size: cover;
+  z-index: 9999;
+  pointer-events: none;
+  animation: flicker 0.2s infinite;
+}
+@keyframes flicker {
+  0%,19%,21%,23%,25%,54%,56%,100% { opacity: 1; }
+  20%,24%,55% { opacity: 0.85; }
+}
