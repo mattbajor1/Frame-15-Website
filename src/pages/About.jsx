@@ -17,7 +17,7 @@ const team = [
   {
     name: 'Aiden Champeau',
     role: 'Producer, Editor',
-    photo: 'images/Frame15_Profiles_Aidan.jpg',
+    photo: '/images/Frame15_Profiles_Aidan.jpg', 
     bio: 'Aiden is the architectural mind behind our edits. He finds rhythm and resonance in every frame.',
   },
   {
@@ -80,8 +80,23 @@ export default function About() {
               >
                 {selected.name}
               </motion.h2>
-              <p className="text-gold text-xl md:text-2xl mt-1">{selected.role}</p>
+              <p className="text-yellow-500 text-xl md:text-2xl mt-1">{selected.role}</p>
               <p className="mt-4 max-w-2xl text-gray-300">{selected.bio}</p>
+            </div>
+
+            {/* Quick-switch circles */}
+            <div className="absolute bottom-6 right-6 md:right-16 flex gap-2 z-20">
+              {team.map((m) => (
+                <button
+                  key={m.name}
+                  onClick={() => setSelected(m)}
+                  className={`w-12 h-12 rounded-full border-2 overflow-hidden ${
+                    m.name === selected.name ? 'border-yellow-500' : 'border-white'
+                  }`}
+                >
+                  <img src={m.photo} alt={m.name} className="w-full h-full object-cover" />
+                </button>
+              ))}
             </div>
           </motion.section>
         )}
@@ -107,7 +122,7 @@ export default function About() {
                 </div>
                 <div className="p-4 text-center">
                   <h3 className="text-2xl font-semibold">
-                    <span className="text-gold">{member.name}</span>
+                    <span className="text-yellow-500">{member.name}</span>
                   </h3>
                   <p className="text-gray-700">{member.role}</p>
                 </div>
@@ -116,16 +131,6 @@ export default function About() {
           </div>
         </section>
       )}
-
-      {/* STUDIO PRINCIPLE */}
-      <section className="bg-black text-white py-24 px-6 text-center">
-        <h2 className="text-5xl md:text-6xl font-extrabold tracking-tight uppercase text-yellow-500 mb-8">
-          Studio Principle
-        </h2>
-        <p className="text-xl max-w-5xl mx-auto text-gray-300 leading-relaxed">
-          At Frame 15, we aren’t chasing trends — we’re chasing truth. Our work balances high-concept vision with real-world storytelling, rooted in design and sharpened by emotion. We’re a team of filmmakers, artists, engineers, and creatives who build with clarity and shoot with purpose. From branded campaigns to narrative shorts, we put every frame under pressure — until it reveals something honest. Collaboration is at the heart of what we do. Every project is a conversation, a risk, and a chance to make something that lasts.
-        </p>
-      </section>
     </>
   );
 }
