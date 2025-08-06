@@ -22,22 +22,22 @@ const team = [
     role: 'Founder & Creative Director',
     roleWord: 'DIRECTOR',
     photo: '/images/Frame15_Profiles_George.jpg',
-    position: '20% 50%', // shift right in both grid + expanded
+    position: '20% 50%', 
     bio: `George founded Frame 15 to chase stories with intent. He leads from the first spark to final delivery, shaping tone, tempo, and taste. Equal parts designer and director, he pushes for clarity in the concept and pressure in the frame, guiding teams, clients, and collaborators toward work that feels inevitable once you see it. His leadership blends meticulous planning with an openness to discovery on set, which keeps every project both crafted and alive. When the stakes are high and the timeline is tight, George turns constraints into creative fuel.`,
   },
   {
     name: 'Henry Weed',
-    role: 'Lead Camera & Cinematography',
+    role: 'Lead Camera & Cinematographer',
     roleWord: 'CAMERA',
     photo: '/images/Frame15_Profiles_Henry.jpg',
     bio: `Henry owns the glass. He designs light, movement, and lens language that carry emotion without shouting. Whether it is a nimble handheld build or a precision move, he engineers camera systems that disappear into the story. His approach pairs technical mastery with instinctive composition, capturing moments that feel intentional and unforced. Henry anticipates how shots will cut together and how the visual rhythm will carry through the final edit. On set, he brings calm precision that lets creativity flow.`,
   },
   {
-    name: 'Aiden Champeau',
+    name: 'Aidan Champeau',
     role: 'Producer & Lead Editor',
     roleWord: 'EDITOR',
     photo: '/images/Frame15_Profiles_Aidan.jpg',
-    bio: `Aiden architects the cut. From boards to timelines, he finds the rhythm that turns a moment into momentum. He balances structure with surprise, building sequences that land cleanly and linger. As a producer, Aiden keeps every moving piece aligned, from budget to delivery, while protecting the creative vision at every stage. In the edit, his pacing is deliberate, his transitions purposeful, and his storytelling layered. He knows when to push, when to refine, and when to let a moment breathe.`,
+    bio: `Aidan architects the cut. From boards to timelines, he finds the rhythm that turns a moment into momentum. He balances structure with surprise, building sequences that land cleanly and linger. As a producer, Aiden keeps every moving piece aligned, from budget to delivery, while protecting the creative vision at every stage. In the edit, his pacing is deliberate, his transitions purposeful, and his storytelling layered. He knows when to push, when to refine, and when to let a moment breathe.`,
   },
   {
     name: 'Jonas Spaulding',
@@ -48,17 +48,17 @@ const team = [
   },
   {
     name: 'Joel Rader',
-    role: 'Director & Cinematographer',
+    role: 'Director & Lead Gaffer',
     roleWord: 'DIRECTOR',
     photo: '/images/Frame15_Profiles_Joel.jpg',
-    position: '100% 50%', // shift left in both grid + expanded
+    position: '100% 50%', 
     bio: `Joel brings a painterly eye to pacing and light. His work threads classic composition with modern restraint, never loud and always precise. As a director, Joel builds an environment where performances feel authentic and camera movement feels motivated. As a cinematographer, he shapes mood and texture in every frame. His style carries quiet confidence that invites the audience to lean in. For Joel, every frame is a chance to create lasting resonance.`,
   },
   {
     name: 'Matthew Bajor',
-    role: 'Marketing & Design Director',
+    role: 'Director of Marketing & Design',
     roleWord: 'DESIGN',
-    photo: '/images/placeholder.jpg',
+    photo: '/images/Frame15_Profiles_Matt.jpg',
     bio: `Matthew builds the brand voice out in the world. He shapes identity, campaigns, and collateral so the studio point of view is unmistakable across every touchpoint. With a foundation in visual arts and strategy, he connects concept to execution and keeps the work cohesive and intentional. Matthew approaches design with a storyteller mindset, understanding how each image, color, and word contributes to the larger narrative. His goal is simple, to make Frame 15 impossible to ignore.`,
   },
 ];
