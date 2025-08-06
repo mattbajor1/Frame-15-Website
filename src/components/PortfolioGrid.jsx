@@ -5,22 +5,32 @@ const projects = [
   { type: "video", title: "Renoun Doc", src: "/assets/nike.jpg" },
   { type: "design", title: "Logo Work", src: "/assets/logo.jpg" },
   { type: "aerial", title: "Drone Reel", src: "/assets/drone.jpg" },
+  // New photography projects
+  { type: "photography", title: "Mountain Light", src: "/assets/photo1.jpg" },
+  { type: "photography", title: "Urban Shadows", src: "/assets/photo2.jpg" },
+  { type: "photography", title: "Cinematic Portrait", src: "/assets/photo3.jpg" },
 ];
 
 export default function PortfolioGrid() {
   const [filter, setFilter] = useState("all");
 
-  const filtered = filter === "all" ? projects : projects.filter(p => p.type === filter);
+  const filtered =
+    filter === "all" ? projects : projects.filter((p) => p.type === filter);
 
   return (
     <div className="bg-black text-white px-6 py-20" id="portfolio">
       <RevealOnScroll className="text-center mb-12">
-        <h2 className="text-5xl font-bold uppercase tracking-wide text-gold">Our Work</h2>
-        <p className="mt-2 text-lg text-gray-400">Curated storytelling across formats</p>
+        <h2 className="text-5xl font-bold uppercase tracking-wide text-gold">
+          Our Work
+        </h2>
+        <p className="mt-2 text-lg text-gray-400">
+          Curated storytelling across formats
+        </p>
       </RevealOnScroll>
 
-      <RevealOnScroll className="flex justify-center space-x-4 mb-12">
-        {["all", "video", "design", "aerial"].map(cat => (
+      {/* Filter buttons */}
+      <RevealOnScroll className="flex justify-center flex-wrap gap-4 mb-12">
+        {["all", "video", "design", "aerial", "photography"].map((cat) => (
           <button
             key={cat}
             onClick={() => setFilter(cat)}
@@ -33,9 +43,13 @@ export default function PortfolioGrid() {
         ))}
       </RevealOnScroll>
 
+      {/* Project grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10">
         {filtered.map((project, idx) => (
-          <RevealOnScroll key={idx} className="relative group rounded-xl overflow-hidden shadow-lg">
+          <RevealOnScroll
+            key={idx}
+            className="relative group rounded-xl overflow-hidden shadow-lg"
+          >
             <img
               src={project.src}
               alt={project.title}
