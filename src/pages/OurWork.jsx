@@ -1,128 +1,170 @@
-import React, { useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import Heading from '../components/Heading';
+import { useState } from "react";
+import RevealOnScroll from "../components/RevealOnScroll";
+import { FiCamera, FiFilm, FiAperture, FiX } from "react-icons/fi";
+import { motion, AnimatePresence } from "framer-motion";
 
-const categories = ['ALL', 'VIDEO', 'DESIGN', 'AERIAL'];
-
-const projects = [
-  { title: 'Film A', desc: 'Short film about ...', category: 'VIDEO', video: '/videos/placeholder.mp4' },
-  { title: 'Doc B', desc: 'Exploring ...', category: 'VIDEO', video: '/videos/placeholder.mp4' },
-  { title: 'Logo Work', desc: 'Brand visuals ...', category: 'DESIGN', video: '/videos/placeholder.mp4' },
-  { title: 'Drone Reel', desc: 'Aerial showcase ...', category: 'AERIAL', video: '/videos/placeholder.mp4' },
-];
+const serviceData = {
+  video: {
+    title: "Video Production",
+    icon: <FiFilm size={32} />, 
+    description:
+      "From concept to final cut, we craft cinematic videos with intention. Commercials, documentaries, and branded content built to move.",
+    projects: [
+      {
+        title: "Renoun Doc",
+        type: "video",
+        src: "https://player.vimeo.com/video/1102554785?h=25a4d4ba50",
+      },
+      {
+        title: "Another Cut",
+        type: "video",
+        src: "https://player.vimeo.com/video/1102554785?h=25a4d4ba50",
+      },
+    ],
+  },
+  photography: {
+    title: "Photography",
+    icon: <FiCamera size={32} />, 
+    description:
+      "Powerful stills that capture tone, mood, and story in a single frame. Editorial, product, and lifestyle visuals that resonate.",
+    projects: [
+      { title: "Mountain Light", type: "image", src: "/assets/photo1.jpg" },
+      { title: "Urban Shadows", type: "image", src: "/assets/photo2.jpg" },
+      { title: "Cinematic Portrait", type: "image", src: "/assets/photo3.jpg" },
+    ],
+  },
+  aerial: {
+    title: "Aerial & Drone",
+    icon: <FiAperture size={32} />, 
+    description:
+      "Elevated perspectives with drone cinematography. We scout, plan, and fly for bold, breathtaking footage.",
+    projects: [
+      {
+        title: "Drone Reel",
+        type: "video",
+        src: "https://player.vimeo.com/video/1102554785?h=25a4d4ba50",
+      },
+      {
+        title: "Top Down",
+        type: "video",
+        src: "https://player.vimeo.com/video/1102554785?h=25a4d4ba50",
+      },
+    ],
+  },
+};
 
 export default function OurWork() {
-  const [selectedCategory, setSelectedCategory] = useState('ALL');
-  const [open, setOpen] = useState(null);
-
-  const filtered = selectedCategory === 'ALL' ? projects : projects.filter(p => p.category === selectedCategory);
+  const [activeTab, setActiveTab] = useState(null);
+  const services = Object.entries(serviceData);
 
   return (
-    <section id="projects" className="bg-black text-white py-24 px-4">
-      <div className="max-w-6xl mx-auto">
-        <Heading title="Our Work" bgWord="WORK" className="text-4xl md:text-5xl text-yellow-500 mb-3" />
-        <p className="text-center md:text-left text-gray-400 mb-8 text-lg">Curated storytelling across formats</p>
+    <section
+      id="projects"
+      className="relative text-white py-28 px-6 bg-cover bg-fixed bg-center bg-no-repeat"
+      style={{
+        backgroundImage: "url('/images/your-background.jpg')",
+      }}
+    >
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm z-0" />
 
-        {/* Tabs */}
-        <div className="flex justify-center md:justify-start gap-3 flex-wrap mb-12">
-          {categories.map(cat => {
-            const active = selectedCategory === cat;
-            return (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`tab px-5 py-2 rounded-full border text-sm uppercase tracking-wide
-                  ${active ? 'tab-active bg-yellow-500 text-black border-yellow-500 font-bold'
-                           : 'border-yellow-500 text-yellow-500 hover:bg-yellow-500 hover:text-black'}`}
-              >
-                {cat}
-              </button>
-            );
-          })}
-        </div>
+      <div className="relative z-10 max-w-6xl mx-auto">
+        <RevealOnScroll className="text-center mb-16">
+          <h2 className="text-5xl font-bold uppercase tracking-wide text-yellow-500">
+            Our Services
+          </h2>
+          <p className="mt-3 text-lg text-gray-300 max-w-xl mx-auto">
+            Bold creative across formats — each crafted with clarity and intent.
+          </p>
+        </RevealOnScroll>
 
-        {/* Grid */}
-        <div className="grid gap-10 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-          <AnimatePresence>
-            {filtered.map((p, i) => (
-              <motion.div
-                key={`${p.title}-${i}`}
-                className="bg-white text-black rounded-lg overflow-hidden shadow-lg card-cinematic"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-80px' }}
-                transition={{ delay: i * 0.12 }}
-              >
-                <HoverVideoCard project={p} onOpen={() => setOpen(p)} />
-              </motion.div>
-            ))}
-          </AnimatePresence>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10">
+          {services.map(([key, service]) => (
+            <motion.div
+              key={key}
+              layout
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className={`bg-black/80 border border-white/10 rounded-xl p-6 md:p-8 flex flex-col text-center shadow-lg backdrop-blur-sm transition-all relative col-span-1 ${
+                activeTab === key ? 'md:col-span-3' : ''
+              }`}
+            >
+              <div className="mb-4 text-yellow-500 flex justify-center">{service.icon}</div>
+              <h3 className="text-2xl font-semibold mb-2">{service.title}</h3>
+              <p className="text-gray-300 mb-4">{service.description}</p>
+
+              {activeTab !== key ? (
+                <button
+                  onClick={() => setActiveTab(key)}
+                  className="mt-auto inline-block px-6 py-2 border border-yellow-500 text-yellow-500 rounded hover:bg-yellow-500 hover:text-black transition"
+                >
+                  View Work
+                </button>
+              ) : (
+                <div className="relative mt-4">
+                  <button
+                    onClick={() => setActiveTab(null)}
+                    className="absolute -top-6 right-0 text-white bg-white/10 hover:bg-white/20 rounded-full p-1 border border-white/20"
+                    aria-label="Close"
+                  >
+                    <FiX size={20} />
+                  </button>
+
+                  <div className="flex justify-center gap-4 flex-wrap mb-6 mt-4">
+                    {services.map(([tabKey, tabService]) => (
+                      <button
+                        key={tabKey}
+                        onClick={() => setActiveTab(tabKey)}
+                        className={`px-5 py-1.5 rounded-full border text-sm font-semibold uppercase transition ${
+                          activeTab === tabKey
+                            ? 'bg-yellow-500 text-black border-yellow-500'
+                            : 'text-yellow-500 border-yellow-500 hover:bg-yellow-500 hover:text-black'
+                        }`}
+                      >
+                        {tabService.title}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                    {serviceData[activeTab].projects.map((project, idx) => (
+                      <RevealOnScroll
+                        key={idx}
+                        className="relative group overflow-hidden rounded-xl shadow-lg"
+                      >
+                        {project.type === "video" ? (
+                          <div className="aspect-w-16 aspect-h-9 w-full">
+                            <iframe
+                              src={`${project.src}?autoplay=0&loop=1&title=0&byline=0&portrait=0`}
+                              className="w-full h-full rounded-xl"
+                              frameBorder="0"
+                              allow="autoplay; fullscreen; picture-in-picture"
+                              allowFullScreen
+                              title={project.title}
+                              loading="lazy"
+                            ></iframe>
+                          </div>
+                        ) : (
+                          <>
+                            <img
+                              src={project.src}
+                              alt={project.title}
+                              className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500"
+                            />
+                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xl font-semibold transition duration-300">
+                              {project.title}
+                            </div>
+                          </>
+                        )}
+                      </RevealOnScroll>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          ))}
         </div>
       </div>
-
-      <CaseStudyModal project={open} onClose={() => setOpen(null)} />
     </section>
-  );
-}
-
-function HoverVideoCard({ project, onOpen }) {
-  const videoRef = useRef(null);
-  const onEnter = () => { const v = videoRef.current; if (!v) return; v.muted = true; v.play().catch(() => {}); };
-  const onLeave = () => { const v = videoRef.current; if (!v) return; v.pause(); v.currentTime = 0; };
-
-  return (
-    <>
-      <div className="w-full h-48 bg-black overflow-hidden" onMouseEnter={onEnter} onMouseLeave={onLeave}>
-        <video ref={videoRef} src={project.video} className="w-full h-full object-cover" playsInline preload="metadata" />
-      </div>
-      <div className="p-6">
-        <h3 className="text-2xl font-semibold mb-1 text-yellow-500 font-display uppercase tracking-wide">{project.title}</h3>
-        <p className="text-gray-700">{project.desc}</p>
-        <div className="mt-4">
-          <button
-            onClick={onOpen}
-            className="btn-cinematic inline-block border border-yellow-500 text-yellow-500 px-4 py-2 rounded hover:bg-yellow-500 hover:text-black"
-          >
-            View
-          </button>
-        </div>
-      </div>
-    </>
-  );
-}
-
-function CaseStudyModal({ project, onClose }) {
-  return (
-    <AnimatePresence>
-      {project && (
-        <motion.div
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[60] bg-black/70 backdrop-blur flex items-center justify-center p-4"
-        >
-          <motion.div
-            initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }}
-            className="max-w-4xl w-full bg-white rounded-xl overflow-hidden shadow-2xl"
-          >
-            <div className="relative w-full h-[50vh] bg-black">
-              <video src={project.video} className="w-full h-full object-cover" controls autoPlay playsInline />
-              <button
-                onClick={onClose}
-                className="absolute top-3 right-3 bg-black/70 text-white px-3 py-1 rounded-full"
-                aria-label="Close case study"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="p-6 text-black">
-              <h3 className="font-display text-3xl uppercase tracking-wide text-yellow-600">{project.title}</h3>
-              <p className="mt-2 text-gray-700">{project.desc}</p>
-              <p className="mt-4 text-gray-700">
-                Description
-              </p>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
   );
 }

@@ -6,9 +6,9 @@ export default function Hero() {
   const iframeRef = useRef(null);
   const playerRef = useRef(null);
   const mountedRef = useRef(false);
-  const [muted, setMuted] = useState(true); // start muted for autoplay reliability
+  const [muted, setMuted] = useState(true);
+  const [videoReady, setVideoReady] = useState(false);
 
-  // Load Vimeo API if needed
   const loadVimeo = () =>
     new Promise((resolve) => {
       if (window.Vimeo && window.Vimeo.Player) return resolve();
@@ -19,7 +19,6 @@ export default function Hero() {
       document.body.appendChild(script);
     });
 
-  // Init player once (handles React StrictMode)
   const initPlayer = async () => {
     if (mountedRef.current) return;
     mountedRef.current = true;
@@ -35,6 +34,7 @@ export default function Hero() {
       await p.setMuted(true);
       const m = await p.getMuted();
       setMuted(Boolean(m));
+      setVideoReady(true);
     } catch {
       /* no-op */
     }
@@ -47,7 +47,6 @@ export default function Hero() {
       playerRef.current = null;
       mountedRef.current = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const toggleMute = async () => {
@@ -57,7 +56,7 @@ export default function Hero() {
       const isMuted = await p.getMuted();
       if (isMuted) {
         await p.setMuted(false);
-        await p.play(); // user gesture → allow audio + resume
+        await p.play();
       } else {
         await p.setMuted(true);
       }
@@ -69,19 +68,33 @@ export default function Hero() {
   };
 
   return (
-    <section id="home" className="relative min-h-screen w-full overflow-hidden bg-black">
-      {/* Background Vimeo video (no background=1 so audio can be enabled) */}
-      <div className="absolute inset-0 w-full h-full overflow-hidden z-0">
+    <section
+      id="home"
+      className="relative w-full h-screen overflow-hidden bg-black"
+      aria-label="Hero section with background video"
+    >
+      {/* Background video */}
+      <div className="absolute inset-0 w-full h-full z-0">
         <div className="absolute inset-0 animate-slow-zoom">
+          {!videoReady && (
+            <img
+              src="/images/hero-poster.jpg"
+              alt="Frame 15 cinematic background"
+              className="absolute top-1/2 left-1/2 min-w-[120vw] min-h-[120vh] -translate-x-1/2 -translate-y-1/2 object-cover"
+            />
+          )}
           <iframe
             ref={iframeRef}
-            src="https://player.vimeo.com/video/1102554785?h=25a4d4ba50&autoplay=1&muted=1&loop=1&controls=0&title=0&byline=0&portrait=0&badge=0&autopause=0"
+            src="https://player.vimeo.com/video/1102554785?h=25a4d4ba50&autoplay=1&muted=1&loop=1&controls=0&title=0&byline=0&portrait=0&badge=0&autopause=0&dnt=1"
             frameBorder="0"
             allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
             referrerPolicy="strict-origin-when-cross-origin"
-            className="absolute top-1/2 left-1/2 min-w-[120vw] min-h-[120vh] -translate-x-1/2 -translate-y-1/2"
+            className={`absolute top-1/2 left-1/2 min-w-[120vw] min-h-[120vh] -translate-x-1/2 -translate-y-1/2 object-cover transition-opacity duration-700 ${
+              videoReady ? 'opacity-100' : 'opacity-0'
+            }`}
             title="Frame 15 Reel"
             allowFullScreen
+            loading="lazy"
           />
         </div>
       </div>
@@ -100,12 +113,12 @@ export default function Hero() {
         className="pointer-events-none absolute bottom-0 left-0 right-0 h-16 md:h-20 bg-black/95 z-20"
       />
 
-      {/* Film grain + gradient overlays */}
+      {/* Overlays */}
       <div className="pointer-events-none absolute inset-0 z-10 opacity-[.25] mix-blend-overlay grain-overlay" />
       <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/80 z-10" />
 
       {/* Hero content */}
-      <div className="relative z-30 flex flex-col items-center justify-center min-h-screen px-4 text-center space-y-6">
+      <div className="relative z-30 flex flex-col items-center justify-center h-screen px-4 text-center space-y-6">
         <motion.h1
           className="font-display text-6xl md:text-7xl font-extrabold uppercase text-white tracking-tight"
           initial={{ opacity: 0, y: 12 }}
