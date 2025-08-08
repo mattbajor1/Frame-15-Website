@@ -1,13 +1,26 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import { FiVolume2, FiVolumeX } from 'react-icons/fi';
 
 export default function Hero() {
+  const sectionRef = useRef(null);
   const iframeRef = useRef(null);
   const playerRef = useRef(null);
   const mountedRef = useRef(false);
+
   const [muted, setMuted] = useState(true);
   const [videoReady, setVideoReady] = useState(false);
+
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ['start start', 'end start'],
+  });
+
+  const overlayOpacity = useTransform(scrollYProgress, [0, 0.6, 1], [1, 0.2, 0]);
+  const titleOpacity   = useTransform(scrollYProgress, [0, 0.35, 0.7], [1, 0.6, 0]);
+  const titleY         = useTransform(scrollYProgress, [0, 0.7], [0, -40]);
+  const titleScale     = useTransform(scrollYProgress, [0, 1], [1, 0.96]);
+  const cueOpacity     = useTransform(scrollYProgress, [0, 0.25, 0.5], [1, 0.6, 0]);
 
   const loadVimeo = () =>
     new Promise((resolve) => {
@@ -19,30 +32,32 @@ export default function Hero() {
       document.body.appendChild(script);
     });
 
-  const initPlayer = async () => {
-    if (mountedRef.current) return;
-    mountedRef.current = true;
-
-    await loadVimeo();
-    if (!iframeRef.current || !window.Vimeo) return;
-
-    const p = new window.Vimeo.Player(iframeRef.current);
-    playerRef.current = p;
-
-    try {
-      await p.ready();
-      await p.setMuted(true);
-      const m = await p.getMuted();
-      setMuted(Boolean(m));
-      setVideoReady(true);
-    } catch {
-      /* no-op */
-    }
-  };
-
   useEffect(() => {
-    initPlayer();
+    let cancelled = false;
+    (async () => {
+      if (mountedRef.current) return;
+      mountedRef.current = true;
+
+      await loadVimeo();
+      if (!iframeRef.current || !window.Vimeo) return;
+
+      const p = new window.Vimeo.Player(iframeRef.current);
+      playerRef.current = p;
+
+      try {
+        await p.ready();
+        if (!cancelled) {
+          await p.setMuted(true);
+          setMuted(true);
+          setVideoReady(true);
+        }
+      } catch {
+        /* no-op */
+      }
+    })();
+
     return () => {
+      cancelled = true;
       if (playerRef.current?.destroy) playerRef.current.destroy().catch(() => {});
       playerRef.current = null;
       mountedRef.current = false;
@@ -60,8 +75,7 @@ export default function Hero() {
       } else {
         await p.setMuted(true);
       }
-      const now = await p.getMuted();
-      setMuted(Boolean(now));
+      setMuted(await p.getMuted());
     } catch (e) {
       console.error('Mute toggle failed:', e);
     }
@@ -69,84 +83,48 @@ export default function Hero() {
 
   return (
     <section
+      ref={sectionRef}
       id="home"
       className="relative w-full h-screen overflow-hidden bg-black"
-      aria-label="Hero section with background video"
     >
       {/* Background video */}
       <div className="absolute inset-0 w-full h-full z-0">
-        <div className="absolute inset-0 animate-slow-zoom">
-          {!videoReady && (
-            <img
-              src="/images/hero-poster.jpg"
-              alt="Frame 15 cinematic background"
-              className="absolute top-1/2 left-1/2 min-w-[120vw] min-h-[120vh] -translate-x-1/2 -translate-y-1/2 object-cover"
-            />
-          )}
-          <iframe
-            ref={iframeRef}
-            src="https://player.vimeo.com/video/1102554785?h=25a4d4ba50&autoplay=1&muted=1&loop=1&controls=0&title=0&byline=0&portrait=0&badge=0&autopause=0&dnt=1"
-            frameBorder="0"
-            allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
-            referrerPolicy="strict-origin-when-cross-origin"
-            className={`absolute top-1/2 left-1/2 min-w-[120vw] min-h-[120vh] -translate-x-1/2 -translate-y-1/2 object-cover transition-opacity duration-700 ${
-              videoReady ? 'opacity-100' : 'opacity-0'
-            }`}
-            title="Frame 15 Reel"
-            allowFullScreen
-            loading="lazy"
+        {!videoReady && (
+          <img
+            src="/images/hero-poster.jpg"
+            alt="Frame 15 cinematic background"
+            className="absolute top-1/2 left-1/2 min-w-[120vw] min-h-[120vh] -translate-x-1/2 -translate-y-1/2 object-cover"
           />
-        </div>
+        )}
+        <iframe
+          ref={iframeRef}
+          src="https://player.vimeo.com/video/1102554785?h=25a4d4ba50&autoplay=1&muted=1&loop=1&controls=0&title=0&byline=0&portrait=0&badge=0&autopause=0&dnt=1"
+          frameBorder="0"
+          allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
+          referrerPolicy="strict-origin-when-cross-origin"
+          className={`absolute top-1/2 left-1/2 min-w-[120vw] min-h-[120vh] -translate-x-1/2 -translate-y-1/2 object-cover transition-opacity duration-700 ${
+            videoReady ? 'opacity-100' : 'opacity-0'
+          }`}
+          title="Frame 15 Reel"
+          allowFullScreen
+          loading="lazy"
+        />
       </div>
 
-      {/* Letterbox bars */}
+      {/* Overlay gradient */}
       <motion.div
-        initial={{ y: '-100%' }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.8, ease: 'easeOut', delay: 0.2 }}
-        className="pointer-events-none absolute top-0 left-0 right-0 h-16 md:h-20 bg-black/95 z-20"
-      />
-      <motion.div
-        initial={{ y: '100%' }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.8, ease: 'easeOut', delay: 0.2 }}
-        className="pointer-events-none absolute bottom-0 left-0 right-0 h-16 md:h-20 bg-black/95 z-20"
+        style={{ opacity: overlayOpacity }}
+        className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/70 via-black/30 to-transparent z-10"
       />
 
-      {/* Overlays */}
-      <div className="pointer-events-none absolute inset-0 z-10 opacity-[.25] mix-blend-overlay grain-overlay" />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/80 z-10" />
-
-      {/* Hero content */}
-      <div className="relative z-30 flex flex-col items-center justify-center h-screen px-4 text-center space-y-6">
-        <motion.h1
-          className="font-display text-6xl md:text-7xl font-extrabold uppercase text-white tracking-tight"
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.9, ease: 'easeOut' }}
-        >
-          Frame <span className="text-yellow-500">15</span>
-        </motion.h1>
-
-        <motion.p
-          className="text-lg md:text-xl text-gray-300 max-w-xl"
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25, duration: 0.7, ease: 'easeOut' }}
-        >
-          Cinematic storytelling through digital experiences.
-        </motion.p>
-
-        <motion.a
-          href="#projects"
-          className="btn-cinematic inline-block border border-yellow-500 px-8 py-3 text-yellow-500 font-semibold rounded hover:bg-yellow-500 hover:text-black transition"
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.45, duration: 0.7, ease: 'easeOut' }}
-        >
-          Explore Projects
-        </motion.a>
-      </div>
+      {/* Scroll cue */}
+      <motion.div
+        style={{ opacity: cueOpacity }}
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center text-white/80"
+      >
+        <span className="text-xs tracking-widest uppercase">Scroll</span>
+        <span className="mt-1 inline-block h-6 w-px bg-white/70 animate-pulse" />
+      </motion.div>
 
       {/* Volume toggle */}
       <button
