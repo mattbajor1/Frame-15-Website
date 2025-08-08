@@ -10,7 +10,7 @@ export default function App() {
   const { showBlooper, setShowBlooper } = useEasterEggs();
 
   return (
-    <div className="flex flex-col min-h-screen bg-black text-white scroll-smooth">
+    <div className="flex flex-col min-h-screen bg-black text-white scroll-smooth overflow-x-hidden relative z-0 scroll-py-12">
       <Navbar />
       <main className="flex-grow">
         <Home />
@@ -20,7 +20,7 @@ export default function App() {
       </main>
       <Footer />
 
-      {/* Blooper Modal (Konami) */}
+   
       {showBlooper && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[100]">
           <div className="relative max-w-4xl w-[92vw]">

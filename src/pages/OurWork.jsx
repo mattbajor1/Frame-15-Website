@@ -1,170 +1,243 @@
-import { useState } from "react";
-import RevealOnScroll from "../components/RevealOnScroll";
-import { FiCamera, FiFilm, FiAperture, FiX } from "react-icons/fi";
-import { motion, AnimatePresence } from "framer-motion";
+// src/components/Services.jsx
+import { useState, useMemo } from 'react';
+import { FiVideo, FiCamera, FiAperture } from 'react-icons/fi';
+import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
+import Heading from '../components/Heading';
 
-const serviceData = {
-  video: {
-    title: "Video Production",
-    icon: <FiFilm size={32} />, 
-    description:
-      "From concept to final cut, we craft cinematic videos with intention. Commercials, documentaries, and branded content built to move.",
-    projects: [
-      {
-        title: "Renoun Doc",
-        type: "video",
-        src: "https://player.vimeo.com/video/1102554785?h=25a4d4ba50",
-      },
-      {
-        title: "Another Cut",
-        type: "video",
-        src: "https://player.vimeo.com/video/1102554785?h=25a4d4ba50",
-      },
-    ],
-  },
-  photography: {
-    title: "Photography",
-    icon: <FiCamera size={32} />, 
-    description:
-      "Powerful stills that capture tone, mood, and story in a single frame. Editorial, product, and lifestyle visuals that resonate.",
-    projects: [
-      { title: "Mountain Light", type: "image", src: "/assets/photo1.jpg" },
-      { title: "Urban Shadows", type: "image", src: "/assets/photo2.jpg" },
-      { title: "Cinematic Portrait", type: "image", src: "/assets/photo3.jpg" },
-    ],
-  },
-  aerial: {
-    title: "Aerial & Drone",
-    icon: <FiAperture size={32} />, 
-    description:
-      "Elevated perspectives with drone cinematography. We scout, plan, and fly for bold, breathtaking footage.",
-    projects: [
-      {
-        title: "Drone Reel",
-        type: "video",
-        src: "https://player.vimeo.com/video/1102554785?h=25a4d4ba50",
-      },
-      {
-        title: "Top Down",
-        type: "video",
-        src: "https://player.vimeo.com/video/1102554785?h=25a4d4ba50",
-      },
-    ],
-  },
-};
+const bgUrl = (p) => `url('${p}')`;
 
-export default function OurWork() {
-  const [activeTab, setActiveTab] = useState(null);
-  const services = Object.entries(serviceData);
+const services = [
+  {
+    id: 'video',
+    name: 'Video Production',
+    icon: FiVideo,
+    description:
+      'From concept to final cut, we bring stories to life through cinematic visuals.',
+    bgImage: '/images/MAD_COW_BTS.jpg',
+    work: [
+      { title: 'Benztown IEX', vimeoEmbed: 'https://player.vimeo.com/video/1107849616?h=5f03988a11&title=0&byline=0&portrait=0' },
+      { title: 'Scout & Griffin', vimeoEmbed: 'https://player.vimeo.com/video/1107827897?title=0&byline=0&portrait=0' },
+      { title: 'GW Trailside', vimeoEmbed: 'https://player.vimeo.com/video/1107829998?title=0&byline=0&portrait=0' },
+      { title: 'Big Jay Preview Cut', vimeoEmbed: 'https://player.vimeo.com/video/1097613407?h=1f7c7d8c30&title=0&byline=0&portrait=0' },
+    ],
+  },
+  {
+    id: 'drone',
+    name: 'Aerial & Drone',
+    icon: FiAperture,
+    description:
+      'High-altitude shots and dynamic movement that elevate every project.',
+    bgImage: '/images/Wing&Wing-43.jpg',
+    work: [],
+  },
+  {
+    id: 'photography',
+    name: 'Photography',
+    icon: FiCamera,
+    description:
+      'Capturing emotion, atmosphere, and light in every frame.',
+    bgImage: '/images/15-IMG_4467-NGAlpsLandscapes2019 Weed.jpg',
+    work: [
+      { title: 'Title', img: '/images/15-IMG_4467-NGAlpsLandscapes2019 Weed.jpg' },
+      { title: 'Title', img: '/images/13-IMG_4423-NGAlpsLandscapes2019 Weed.jpg' },
+      { title: 'Title', img: '/images/01-IMG_1305-Weedfield2019 Weed.jpg' },
+      { title: 'Title', img: '/images/17-IMG_4480-NGAlpsLandscapes2019 Weed.jpg' },
+      { title: 'Title', img: '/images/123-IMG_7929-NGAlpsLandscapes2019 Weed.jpg' },
+      { title: 'Title', img: '/images/manitou-10.jpg' },
+      { title: 'Title', img: '/images/DSC07623_edited.jpg' },
+      { title: 'Title', img: '/images/63848_HWE_001_07 (1).jpg' },
+      { title: 'Title', img: '/images/63848_HWE_002_37.jpg' },
+      { title: 'Title', img: '/images/IMG_2551 (1).jpeg' },
+    ],
+  },
+];
+
+// motion settings
+const ease = [0.22, 1, 0.36, 1];
+const tCard = { duration: 0.5, ease };
+const tContent = { duration: 0.35, ease };
+const gridVariants = { hidden: {}, visible: { transition: { staggerChildren: 0.08 } } };
+const itemVariants = { hidden: { opacity: 0, y: 18 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease } } };
+
+export default function Services() {
+  const [expanded, setExpanded] = useState(null);
+  const active = useMemo(() => services.find((s) => s.id === expanded) ?? null, [expanded]);
 
   return (
-    <section
-      id="projects"
-      className="relative text-white py-28 px-6 bg-cover bg-fixed bg-center bg-no-repeat"
-      style={{
-        backgroundImage: "url('/images/your-background.jpg')",
-      }}
-    >
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm z-0" />
-
-      <div className="relative z-10 max-w-6xl mx-auto">
-        <RevealOnScroll className="text-center mb-16">
-          <h2 className="text-5xl font-bold uppercase tracking-wide text-yellow-500">
-            Our Services
-          </h2>
-          <p className="mt-3 text-lg text-gray-300 max-w-xl mx-auto">
-            Bold creative across formats — each crafted with clarity and intent.
-          </p>
-        </RevealOnScroll>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10">
-          {services.map(([key, service]) => (
-            <motion.div
-              key={key}
-              layout
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              className={`bg-black/80 border border-white/10 rounded-xl p-6 md:p-8 flex flex-col text-center shadow-lg backdrop-blur-sm transition-all relative col-span-1 ${
-                activeTab === key ? 'md:col-span-3' : ''
-              }`}
-            >
-              <div className="mb-4 text-yellow-500 flex justify-center">{service.icon}</div>
-              <h3 className="text-2xl font-semibold mb-2">{service.title}</h3>
-              <p className="text-gray-300 mb-4">{service.description}</p>
-
-              {activeTab !== key ? (
-                <button
-                  onClick={() => setActiveTab(key)}
-                  className="mt-auto inline-block px-6 py-2 border border-yellow-500 text-yellow-500 rounded hover:bg-yellow-500 hover:text-black transition"
-                >
-                  View Work
-                </button>
-              ) : (
-                <div className="relative mt-4">
-                  <button
-                    onClick={() => setActiveTab(null)}
-                    className="absolute -top-6 right-0 text-white bg-white/10 hover:bg-white/20 rounded-full p-1 border border-white/20"
-                    aria-label="Close"
-                  >
-                    <FiX size={20} />
-                  </button>
-
-                  <div className="flex justify-center gap-4 flex-wrap mb-6 mt-4">
-                    {services.map(([tabKey, tabService]) => (
-                      <button
-                        key={tabKey}
-                        onClick={() => setActiveTab(tabKey)}
-                        className={`px-5 py-1.5 rounded-full border text-sm font-semibold uppercase transition ${
-                          activeTab === tabKey
-                            ? 'bg-yellow-500 text-black border-yellow-500'
-                            : 'text-yellow-500 border-yellow-500 hover:bg-yellow-500 hover:text-black'
-                        }`}
-                      >
-                        {tabService.title}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                    {serviceData[activeTab].projects.map((project, idx) => (
-                      <RevealOnScroll
-                        key={idx}
-                        className="relative group overflow-hidden rounded-xl shadow-lg"
-                      >
-                        {project.type === "video" ? (
-                          <div className="aspect-w-16 aspect-h-9 w-full">
-                            <iframe
-                              src={`${project.src}?autoplay=0&loop=1&title=0&byline=0&portrait=0`}
-                              className="w-full h-full rounded-xl"
-                              frameBorder="0"
-                              allow="autoplay; fullscreen; picture-in-picture"
-                              allowFullScreen
-                              title={project.title}
-                              loading="lazy"
-                            ></iframe>
-                          </div>
-                        ) : (
-                          <>
-                            <img
-                              src={project.src}
-                              alt={project.title}
-                              className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500"
-                            />
-                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xl font-semibold transition duration-300">
-                              {project.title}
-                            </div>
-                          </>
-                        )}
-                      </RevealOnScroll>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </motion.div>
-          ))}
-        </div>
+    <section id="projects" className="bg-black text-white py-24">
+      <div className="max-w-6xl mx-auto px-4">
+        <Heading title="Our Services" bgWord="SERVICES" className="text-4xl md:text-5xl text-yellow-500 mb-12" />
       </div>
+
+      <LayoutGroup>
+        <div className="mx-auto w-full px-4 md:px-6 max-w-[1700px]">
+          <div className="flex gap-6 items-start">
+            {/* LEFT: grid or expanded panel */}
+            <div className="flex-1 min-w-0">
+              <div className={expanded ? '' : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'}>
+                {!expanded && services.map((s) => (
+                  <motion.button
+                    key={s.id}
+                    layoutId={`card-${s.id}`}
+                    onClick={() => setExpanded(s.id)}
+                    className="relative rounded-xl overflow-hidden border border-white/10 text-left group transform-gpu transition-transform duration-300 hover:scale-[1.02]"
+                    initial={false}
+                    transition={tCard}
+                    style={{
+                      backgroundImage: bgUrl(s.bgImage),
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                    }}
+                  >
+                    <div className="relative z-10 p-6">
+                      {/* Title chip — no scale on hover (prevents text shift) */}
+                      <div className="inline-flex items-center gap-2 bg-black/60 backdrop-blur px-4 py-2 rounded-md">
+                        <s.icon size={22} className="text-yellow-500 transition-colors duration-200 group-hover:text-yellow-400" />
+                        <span className="text-lg font-semibold font-display uppercase tracking-wide text-yellow-500 transition-colors duration-200 group-hover:text-yellow-400">
+                          {s.name}
+                        </span>
+                      </div>
+
+                      {/* Service description (opaque box), not full-cover */}
+                      {s.description && (
+                        <div className="mt-3 inline-block rounded-md bg-black/60 backdrop-blur px-4 py-3">
+                          <p className="text-sm text-white/85 max-w-[52ch]">{s.description}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/40 to-transparent" />
+                  </motion.button>
+                ))}
+
+                <AnimatePresence>
+                  {expanded && active && (
+                    <motion.div
+                      key={active.id}
+                      layoutId={`card-${active.id}`}
+                      className="relative rounded-xl overflow-hidden border border-white/10"
+                      transition={tCard}
+                      style={{
+                        backgroundImage: bgUrl(active.bgImage),
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                      }}
+                    >
+                      <motion.div
+                        className="relative z-10 p-6 md:p-8"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={tContent}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="inline-flex items-center gap-3 bg-black/60 backdrop-blur px-4 py-2 rounded-lg">
+                            <active.icon size={28} className="text-yellow-500" />
+                            <h3 className="text-2xl md:text-3xl font-bold font-display uppercase">{active.name}</h3>
+                          </div>
+                          <button
+                            onClick={() => setExpanded(null)}
+                            className="hidden md:inline-block bg-white text-black px-4 py-2 rounded font-bold"
+                          >
+                            Close
+                          </button>
+                        </div>
+
+                        {/* Category description (only if present) */}
+                        {active.description && (
+                          <div className="mt-4 inline-block rounded-md bg-black/60 backdrop-blur px-4 py-3">
+                            <p className="text-sm text-white/85 max-w-[68ch]">{active.description}</p>
+                          </div>
+                        )}
+
+                        {/* Work grid with fade+stagger */}
+                        <div className="mt-5 rounded-xl bg-black/55 backdrop-blur px-5 py-6">
+                          <motion.div
+                            className="grid md:grid-cols-2 gap-6"
+                            initial="hidden"
+                            animate="visible"
+                            variants={gridVariants}
+                          >
+                            {active.work.map((item, i) => (
+                              <motion.div key={i} variants={itemVariants}>
+                                {item.vimeoEmbed ? (
+                                  <div className="aspect-video w-full">
+                                    <iframe
+                                      src={item.vimeoEmbed}
+                                      className="w-full h-full rounded-md"
+                                      frameBorder="0"
+                                      allow="autoplay; fullscreen; picture-in-picture"
+                                      allowFullScreen
+                                    ></iframe>
+                                    <h4 className="mt-2 text-lg font-semibold font-display">{item.title}</h4>
+                                  </div>
+                                ) : item.img ? (
+                                  <div className="relative group overflow-hidden rounded-md">
+                                    <img src={item.img} alt={item.title} className="w-full h-auto object-cover" />
+                                    <div className="absolute bottom-0 left-0 p-4 bg-black/70 text-white w-full opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <h4 className="text-lg font-bold font-display">Title</h4>
+                                    </div>
+                                  </div>
+                                ) : null}
+                              </motion.div>
+                            ))}
+                          </motion.div>
+                        </div>
+
+                        <button
+                          onClick={() => setExpanded(null)}
+                          className="mt-6 md:hidden bg-white text-black px-4 py-2 rounded font-bold w-full"
+                        >
+                          Close
+                        </button>
+                      </motion.div>
+
+                      <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/40 to-transparent" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+
+            {/* RIGHT: skinny switcher */}
+            <AnimatePresence>
+              {expanded && (
+                <motion.aside
+                  key="switcher"
+                  initial={{ opacity: 0, x: 12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 12 }}
+                  transition={tContent}
+                  className="hidden md:flex w-[280px] shrink-0 flex-col gap-4"
+                >
+                  {services.filter((s) => s.id !== expanded).map((s) => (
+                    <button
+                      key={s.id}
+                      onClick={() => setExpanded(s.id)}
+                      className="relative rounded-lg overflow-hidden border border-white/10 text-left transform-gpu transition-transform duration-300 hover:scale-[1.02]"
+                      style={{
+                        backgroundImage: bgUrl(s.bgImage),
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                      }}
+                    >
+                      <div className="p-4">
+                        <div className="inline-flex items-center gap-2 rounded-md bg-black/55 backdrop-blur px-3 py-2">
+                          <s.icon size={18} className="text-yellow-500 transition-colors duration-200 group-hover:text-yellow-400" />
+                          <h4 className="text-sm font-semibold font-display uppercase tracking-wide text-yellow-500 transition-colors duration-200 group-hover:text-yellow-400">
+                            {s.name}
+                          </h4>
+                        </div>
+                      </div>
+                      <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/35 to-transparent" />
+                    </button>
+                  ))}
+                </motion.aside>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+      </LayoutGroup>
     </section>
   );
 }
