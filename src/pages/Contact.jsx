@@ -12,7 +12,6 @@ export default function Contact() {
     const form = e.currentTarget;
     const formData = new FormData(form);
 
-    // Netlify requires this hidden "form-name" to match the form's name.
     formData.set('form-name', 'contact');
 
     try {
@@ -27,7 +26,7 @@ export default function Contact() {
       form.reset();
       setStatus({
         type: 'success',
-        message: "Thanks—got it. We'll get back to you shortly.",
+        message: "Thanks! We got it. We'll get back to you shortly.",
       });
     } catch (err) {
       setStatus({
@@ -56,7 +55,6 @@ export default function Contact() {
           onSubmit={handleSubmit}
           noValidate
         >
-          {/* Netlify hidden fields */}
           <input type="hidden" name="form-name" value="contact" />
           <p className="hidden">
             <label>
@@ -168,13 +166,12 @@ export default function Contact() {
                   key={label}
                   className="flex items-center gap-3 rounded-xl border border-neutral-200 px-4 py-3"
                 >
-                  {/* [] suffix allows multiple values */}
                   <input
                     type="checkbox"
                     name="projectType[]"
                     value={label}
                     className="h-4 w-4"
-                    required={false} // we’ll rely on at least one being nice-to-have, not hard-required
+                    required={false}
                   />
                   <span className="text-sm">{label}</span>
                 </label>

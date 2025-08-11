@@ -6,6 +6,8 @@ import About from './pages/About';
 import Contact from './pages/Contact';
 import useEasterEggs from './hooks/useEasterEggs';
 
+import Portfolio from './pages/Portfolio';
+
 export default function App() {
   const { showBlooper, setShowBlooper } = useEasterEggs();
 
@@ -20,12 +22,13 @@ export default function App() {
       </main>
       <Footer />
 
-   
+      <Portfolio />
+
       {showBlooper && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[100]">
           <div className="relative max-w-4xl w-[92vw]">
             <video
-              src="/videos/blooper.mp4"  // place in /public/videos
+              src="/videos/blooper.mp4"  
               controls
               autoPlay
               className="w-full max-h-[80vh] rounded-xl shadow-2xl"

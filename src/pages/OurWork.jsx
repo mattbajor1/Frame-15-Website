@@ -1,6 +1,6 @@
 // src/components/Services.jsx
-import { useState, useMemo } from 'react';
-import { FiVideo, FiCamera, FiAperture } from 'react-icons/fi';
+import { useState, useMemo, useEffect } from 'react';
+import { FiVideo, FiCamera, FiAperture, FiX, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import Heading from '../components/Heading';
 
@@ -63,6 +63,35 @@ export default function Services() {
   const [expanded, setExpanded] = useState(null);
   const active = useMemo(() => services.find((s) => s.id === expanded) ?? null, [expanded]);
 
+  // PHOTO LIGHTBOX STATE
+  const photoItems = useMemo(
+    () => (active ? active.work.filter((w) => w.img) : []),
+    [active]
+  );
+  const [lbIndex, setLbIndex] = useState(null); // index within photoItems
+
+  // Close lightbox when switching/closing service
+  useEffect(() => { setLbIndex(null); }, [expanded]);
+
+  // Keyboard controls for lightbox
+  useEffect(() => {
+    if (lbIndex === null || photoItems.length === 0) return;
+    const onKey = (e) => {
+      if (e.key === 'Escape') setLbIndex(null);
+      if (e.key === 'ArrowRight') setLbIndex((i) => (i + 1) % photoItems.length);
+      if (e.key === 'ArrowLeft') setLbIndex((i) => (i - 1 + photoItems.length) % photoItems.length);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [lbIndex, photoItems.length]);
+
+  // Helper to map a clicked photo src to its index in photoItems
+  const photoIndexBySrc = useMemo(() => {
+    const m = {};
+    photoItems.forEach((p, i) => { m[p.img] = i; });
+    return m;
+  }, [photoItems]);
+
   return (
     <section id="projects" className="bg-black text-white py-24">
       <div className="max-w-6xl mx-auto px-4">
@@ -90,7 +119,7 @@ export default function Services() {
                     }}
                   >
                     <div className="relative z-10 p-6">
-                      {/* Title chip — no scale on hover (prevents text shift) */}
+                      {/* Title chip */}
                       <div className="inline-flex items-center gap-2 bg-black/60 backdrop-blur px-4 py-2 rounded-md">
                         <s.icon size={22} className="text-yellow-500 transition-colors duration-200 group-hover:text-yellow-400" />
                         <span className="text-lg font-semibold font-display uppercase tracking-wide text-yellow-500 transition-colors duration-200 group-hover:text-yellow-400">
@@ -98,7 +127,7 @@ export default function Services() {
                         </span>
                       </div>
 
-                      {/* Service description (opaque box), not full-cover */}
+                      {/* Service description */}
                       {s.description && (
                         <div className="mt-3 inline-block rounded-md bg-black/60 backdrop-blur px-4 py-3">
                           <p className="text-sm text-white/85 max-w-[52ch]">{s.description}</p>
@@ -168,15 +197,30 @@ export default function Services() {
                                       frameBorder="0"
                                       allow="autoplay; fullscreen; picture-in-picture"
                                       allowFullScreen
-                                    ></iframe>
-                                    <h4 className="mt-2 text-lg font-semibold font-display">{item.title}</h4>
+                                    />
+                                    {/* KEEP video titles */}
+                                    {item.title && (
+                                      <h4 className="mt-2 text-lg font-semibold font-display">{item.title}</h4>
+                                    )}
                                   </div>
                                 ) : item.img ? (
-                                  <div className="relative group overflow-hidden rounded-md">
-                                    <img src={item.img} alt={item.title} className="w-full h-auto object-cover" />
-                                    <div className="absolute bottom-0 left-0 p-4 bg-black/70 text-white w-full opacity-0 group-hover:opacity-100 transition-opacity">
-                                      <h4 className="text-lg font-bold font-display">Title</h4>
-                                    </div>
+                                  // Photo: no titles — click to open lightbox
+                                  <div
+                                    className="relative overflow-hidden rounded-md cursor-zoom-in"
+                                    role="button"
+                                    tabIndex={0}
+                                    onClick={() => setLbIndex(photoIndexBySrc[item.img] ?? 0)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter' || e.key === ' ') setLbIndex(photoIndexBySrc[item.img] ?? 0);
+                                    }}
+                                  >
+                                    <img
+                                      src={item.img}
+                                      alt=""
+                                      className="w-full h-auto object-cover"
+                                      decoding="async"
+                                      loading="lazy"
+                                    />
                                   </div>
                                 ) : null}
                               </motion.div>
@@ -238,6 +282,75 @@ export default function Services() {
           </div>
         </div>
       </LayoutGroup>
+
+      {/* PHOTO LIGHTBOX OVERLAY */}
+      <AnimatePresence>
+        {lbIndex !== null && photoItems.length > 0 && (
+          <motion.div
+            className="fixed inset-0 z-[140] bg-black/90 flex items-center justify-center p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setLbIndex(null)}
+            aria-modal="true"
+            role="dialog"
+          >
+            {/* Close (X) — on top of everything */}
+            <button
+              onClick={(e) => { e.stopPropagation(); setLbIndex(null); }}
+              className="absolute top-4 right-4 md:top-6 md:right-6 z-50 rounded-full p-2 bg-white/10 hover:bg-white/20 text-white"
+              aria-label="Close"
+              title="Close"
+            >
+              <FiX className="h-6 w-6" />
+            </button>
+
+            {/* Visible arrow buttons */}
+            <button
+              onClick={(e) => { e.stopPropagation(); setLbIndex((i) => (i - 1 + photoItems.length) % photoItems.length); }}
+              className="hidden sm:flex absolute left-3 md:left-6 top-1/2 -translate-y-1/2 z-40 rounded-full p-2 bg-white/10 hover:bg-white/20 text-white"
+              aria-label="Previous image"
+              title="Previous"
+            >
+              <FiChevronLeft className="h-7 w-7" />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); setLbIndex((i) => (i + 1) % photoItems.length); }}
+              className="hidden sm:flex absolute right-3 md:right-6 top-1/2 -translate-y-1/2 z-40 rounded-full p-2 bg-white/10 hover:bg-white/20 text-white"
+              aria-label="Next image"
+              title="Next"
+            >
+              <FiChevronRight className="h-7 w-7" />
+            </button>
+
+            {/* Big image */}
+            <motion.img
+              key={photoItems[lbIndex].img}
+              src={photoItems[lbIndex].img}
+              alt=""
+              className="max-h-[88vh] w-auto rounded-xl shadow-2xl z-30"
+              initial={{ scale: 0.96, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.96, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+            />
+
+            {/* Invisible wide hit areas (safe top gap so X isn't an arrow) */}
+            <button
+              className="absolute left-0 top-16 md:top-20 bottom-0 w-1/3 md:w-1/4 z-20"
+              onClick={(e) => { e.stopPropagation(); setLbIndex((i) => (i - 1 + photoItems.length) % photoItems.length); }}
+              aria-label="Previous"
+              title="Previous"
+            />
+            <button
+              className="absolute right-0 top-16 md:top-20 bottom-0 w-1/3 md:w-1/4 z-20"
+              onClick={(e) => { e.stopPropagation(); setLbIndex((i) => (i + 1) % photoItems.length); }}
+              aria-label="Next"
+              title="Next"
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }

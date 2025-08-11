@@ -1,4 +1,3 @@
-// src/components/Navbar.jsx
 import { useEffect, useState } from 'react';
 import { FiMenu, FiX } from 'react-icons/fi';
 import { motion, useScroll, useTransform } from 'framer-motion';
@@ -7,26 +6,34 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
-  // MUCH slower fade window
-  // Brand fully visible until ~200px, fades out by ~600px
-  // Logo fades in over the same extended distance
+  // slow fade behavior
   const { scrollY } = useScroll();
   const brandOpacity = useTransform(scrollY, [0, 200, 600], [1, 1, 0]);
   const brandY       = useTransform(scrollY, [0, 600], [0, -10]);
   const logoOpacity  = useTransform(scrollY, [0, 200, 600], [0, 0.4, 1]);
-
-  const items = [
-    { label: 'Home', href: '#home' },
-    { label: 'Our Services', href: '#projects' },
-    { label: 'About', href: '#about' },
-    { label: 'Contact', href: '#contact' },
-  ];
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  const links = [
+    { label: 'Home', href: '#home' },
+    { label: 'Our Services', href: '#projects' },
+    { label: 'About', href: '#about' },
+    { label: 'Contact', href: '#contact' },
+  ];
+
+  // reset any global <a> styles + make even, larger hit areas
+  const linkBase =
+    '!m-0 !border-0 !rounded-none !bg-transparent hover:!bg-transparent ' +
+    'inline-flex items-center h-10 px-3 ' +
+    'font-display uppercase tracking-wide text-white whitespace-nowrap leading-none ' +
+    'text-base lg:text-lg ' +
+    'relative after:absolute after:left-0 after:-bottom-0.5 after:h-[3px] after:w-full after:bg-yellow-500 ' +
+    'after:scale-x-0 hover:after:scale-x-100 after:origin-left after:transition-transform after:duration-300 ' +
+    'hover:text-yellow-500 transition-colors';
 
   return (
     <nav
@@ -35,81 +42,82 @@ export default function Navbar() {
       }`}
       aria-label="Main navigation"
     >
-      <div className="mx-auto max-w-6xl px-4 py-6 flex items-center justify-between relative">
-        {/* LEFT: Logo fades in slowly */}
-        <a href="#home" className="flex items-center gap-3" title="Go to home">
-          <motion.img
-            src="/images/Logo.png"
-            alt="Frame 15"
-            className="h-12 md:h-14 w-auto"
-            style={{ opacity: logoOpacity }}
-          />
-        </a>
+      {/* FULL BLEED: no max-w container here */}
+      <div className="px-6 lg:px-10 py-6">
+        {/* true 3-col grid: left 1fr | brand auto | right 1fr (brand stays centered) */}
+        <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center">
+          {/* LEFT: logo */}
+          <a href="#home" className="justify-self-start flex items-center" title="Go to home">
+            <motion.img
+              src="/images/Logo.png"
+              alt="Frame 15"
+              className="h-12 md:h-14 w-auto"
+              style={{ opacity: logoOpacity }}
+            />
+          </a>
 
-        {/* CENTER: Massive brand text fades out slowly */}
-        <a
-          href="#home"
-          className="absolute left-1/2 -translate-x-1/2"
-          title="Go to home"
-          aria-label="Frame 15"
-        >
-          <motion.span
-            style={{ opacity: brandOpacity, y: brandY }}
-            className="font-display text-4xl md:text-6xl font-extrabold uppercase tracking-wide text-white select-none"
-          >
-            Frame <span className="text-yellow-500">15</span>
-          </motion.span>
-        </a>
-
-        {/* RIGHT: Desktop nav links */}
-        <div className="hidden md:flex items-center gap-12 ml-auto">
-          {items.map(({ label, href }) => (
-            <a
-              key={label}
-              href={href}
-              className="relative pb-1 font-display uppercase tracking-wide text-white text-lg md:text-xl
-                         after:absolute after:left-0 after:bottom-0 after:w-full after:h-[3px] after:bg-yellow-500
-                         after:scale-x-0 hover:after:scale-x-100 after:origin-left after:transition-transform after:duration-300
-                         hover:text-yellow-500 transition-colors"
+          {/* CENTER: brand */}
+          <a href="#home" className="justify-self-center text-center" title="Go to home" aria-label="Frame 15">
+            <motion.span
+              style={{ opacity: brandOpacity, y: brandY }}
+              className="font-display text-4xl md:text-6xl font-extrabold uppercase tracking-wide text-white select-none leading-none"
             >
-              {label}
-            </a>
-          ))}
-        </div>
+              FRAME <span className="text-yellow-500">15</span>
+            </motion.span>
+          </a>
 
-        {/* Mobile menu button */}
-        <button
-          className="md:hidden text-white ml-auto"
-          onClick={() => setOpen(!open)}
-          aria-label="Toggle mobile menu"
-          aria-expanded={open}
-          aria-controls="mobile-menu"
-        >
-          {open ? <FiX size={28} /> : <FiMenu size={28} />}
-        </button>
+          {/* RIGHT: links + portfolio (now use the gutter space) */}
+          <div className="hidden md:flex justify-self-end items-center gap-7 lg:gap-9">
+            {links.map(({ label, href }) => (
+              <a key={label} href={href} className={linkBase}>
+                {label}
+              </a>
+            ))}
+            <a
+              href="#portfolio"
+              onClick={(e) => {
+                e.preventDefault();
+                if (window.location.hash !== '#portfolio') window.location.hash = 'portfolio';
+              }}
+              className={`${linkBase} !px-4 !border !border-white/30 !rounded-full`}
+            >
+              Portfolio
+            </a>
+          </div>
+
+          {/* Mobile menu toggle */}
+          <button
+            className="md:hidden text-white justify-self-end"
+            onClick={() => setOpen((v) => !v)}
+            aria-label="Toggle mobile menu"
+            aria-expanded={open}
+            aria-controls="mobile-menu"
+          >
+            {open ? <FiX size={28} /> : <FiMenu size={28} />}
+          </button>
+        </div>
       </div>
 
-      {/* Mobile menu */}
+      {/* Mobile drawer (still full-bleed padding) */}
       <div
         id="mobile-menu"
         className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
           open ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
         } bg-black border-t border-white/10`}
       >
-        <div className="mx-auto max-w-6xl px-4 py-4 flex flex-col gap-4">
-          {items.map(({ label, href }) => (
-            <a
-              key={label}
-              href={href}
-              onClick={() => setOpen(false)}
-              className="relative pb-1 font-display uppercase tracking-wide text-white text-xl
-                         after:absolute after:left-0 after:bottom-0 after:w-full after:h-[3px] after:bg-yellow-500
-                         after:scale-x-0 hover:after:scale-x-100 after:origin-left after:transition-transform after:duration-300
-                         hover:text-yellow-500 transition-colors"
-            >
+        <div className="px-6 lg:px-10 py-4 flex flex-col gap-3">
+          {links.map(({ label, href }) => (
+            <a key={label} href={href} onClick={() => setOpen(false)} className={`${linkBase} text-xl`}>
               {label}
             </a>
           ))}
+          <a
+            href="#portfolio"
+            onClick={(e) => { e.preventDefault(); setOpen(false); window.location.hash = 'portfolio'; }}
+            className="inline-flex items-center h-10 px-4 rounded-full border border-white/30 text-white text-xl hover:bg-white hover:text-black transition"
+          >
+            Portfolio
+          </a>
         </div>
       </div>
     </nav>

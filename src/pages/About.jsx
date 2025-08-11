@@ -37,7 +37,7 @@ const team = [
     role: 'Producer & Lead Editor',
     roleWord: 'EDITOR',
     photo: '/images/Frame15_Profiles_Aidan.jpg',
-    bio: `Aidan architects the cut. From boards to timelines, he finds the rhythm that turns a moment into momentum. He balances structure with surprise, building sequences that land cleanly and linger. As a producer, Aiden keeps every moving piece aligned, from budget to delivery, while protecting the creative vision at every stage. In the edit, his pacing is deliberate, his transitions purposeful, and his storytelling layered. He knows when to push, when to refine, and when to let a moment breathe.`,
+    bio: `Aidan architects the cut. From boards to timelines, he finds the rhythm that turns a moment into momentum. He balances structure with surprise, building sequences that land cleanly and linger. As a producer, Aidan keeps every moving piece aligned, from budget to delivery, while protecting the creative vision at every stage. In the edit, his pacing is deliberate, his transitions purposeful, and his storytelling layered. He knows when to push, when to refine, and when to let a moment breathe.`,
   },
   {
     name: 'Jonas Spaulding',
