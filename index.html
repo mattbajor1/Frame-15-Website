@@ -7,18 +7,15 @@
     <title>Frame 15 | Cinematic Storytelling</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <!-- SEO -->
     <meta name="description" content="Frame 15 is a creative production studio delivering cinematic storytelling across film, design, and aerial visuals." />
     <meta name="keywords" content="Frame 15, video production, cinematography, photography, design, aerial, drone" />
 
-    <!-- Open Graph -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Frame 15 | Cinematic Storytelling" />
     <meta property="og:description" content="Creative production studio delivering cinematic storytelling across film, design, and aerial visuals." />
     <meta property="og:url" content="https://your-domain.com/" />
     <meta property="og:image" content="https://your-domain.com/images/og-preview.jpg" />
 
-    <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Frame 15 | Cinematic Storytelling" />
     <meta name="twitter:description" content="Creative production studio delivering cinematic storytelling across film, design, and aerial visuals." />
@@ -28,6 +25,35 @@
   </head>
   <body class="bg-black">
     <div id="root"></div>
+
+    <form name="contact" method="POST" data-netlify="true" data-netlify-honeypot="bot-field" hidden>
+      <input type="hidden" name="form-name" value="contact" />
+
+      <input type="text" name="name" />
+      <input type="email" name="email" />
+      <input type="text" name="company" />
+      <input type="url" name="referenceUrl" />
+
+      <select name="budget">
+        <option>$0-$5k</option>
+        <option>$5k-$10k</option>
+        <option>$10k-$25k</option>
+        <option>$25k-$50k</option>
+        <option>$50k-$100k</option>
+        <option>$100k+</option>
+      </select>
+
+      <input type="checkbox" name="projectType[]" value="Commercial / Ad" />
+      <input type="checkbox" name="projectType[]" value="Brand Film" />
+      <input type="checkbox" name="projectType[]" value="Social Content" />
+      <input type="checkbox" name="projectType[]" value="Doc / Story" />
+      <input type="checkbox" name="projectType[]" value="Design / Branding" />
+      <input type="checkbox" name="projectType[]" value="Photography" />
+
+      <textarea name="message"></textarea>
+      <input name="bot-field" />
+    </form>
+
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
