@@ -7,13 +7,10 @@ export default function Home() {
     <>
       <Hero />
 
-      {/* The Frame of Mind Section */}
       <section className="relative bg-black text-white py-24 px-6 overflow-hidden">
-        {/* Background grain */}
         <div className="absolute inset-0 grain-overlay opacity-30 pointer-events-none" />
 
         <div className="relative max-w-6xl mx-auto text-center">
-          {/* Heading (consistent with About/Services) */}
           <Heading
             title="The Frame of Mind"
             bgWord="MINDSET"

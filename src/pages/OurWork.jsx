@@ -17,8 +17,8 @@ const services = [
     work: [
       { title: 'Benztown IEX', vimeoEmbed: 'https://player.vimeo.com/video/1107849616?h=5f03988a11&title=0&byline=0&portrait=0' },
       { title: 'Scout & Griffin', vimeoEmbed: 'https://player.vimeo.com/video/1107827897?title=0&byline=0&portrait=0' },
-      { title: 'GW Trailside', vimeoEmbed: 'https://player.vimeo.com/video/1107829998?title=0&byline=0&portrait=0' },
-      { title: 'Big Jay Preview Cut', vimeoEmbed: 'https://player.vimeo.com/video/1097613407?h=1f7c7d8c30&title=0&byline=0&portrait=0' },
+      { title: 'Trailside Museum and Zoo', vimeoEmbed: 'https://player.vimeo.com/video/1107829998?title=0&byline=0&portrait=0' },
+      { title: 'Big Jay Preview', vimeoEmbed: 'https://player.vimeo.com/video/1097613407?h=1f7c7d8c30&title=0&byline=0&portrait=0' },
     ],
   },
   {
@@ -26,9 +26,12 @@ const services = [
     name: 'Aerial & Drone',
     icon: FiAperture,
     description:
-      'High-altitude shots and dynamic movement that elevate every project.',
+      'Elevated perspective and dynamic movement to take your project to new heights.',
     bgImage: '/images/Wing&Wing-43.jpg',
-    work: [],
+    work: [
+      { title: 'Lake Champlain', vimeoEmbed: 'https://player.vimeo.com/video/1109222906?h=a384f20fa0&title=0&byline=0&portrait=0' },
+      { title: 'Sunset', vimeoEmbed: 'https://player.vimeo.com/video/1109220783?h=dc686fba43&title=0&byline=0&portrait=0' },
+    ],
   },
   {
     id: 'photography',
@@ -52,7 +55,6 @@ const services = [
   },
 ];
 
-// motion settings
 const ease = [0.22, 1, 0.36, 1];
 const tCard = { duration: 0.5, ease };
 const tContent = { duration: 0.35, ease };
@@ -68,12 +70,10 @@ export default function Services() {
     () => (active ? active.work.filter((w) => w.img) : []),
     [active]
   );
-  const [lbIndex, setLbIndex] = useState(null); // index within photoItems
+  const [lbIndex, setLbIndex] = useState(null);
 
-  // Close lightbox when switching/closing service
   useEffect(() => { setLbIndex(null); }, [expanded]);
 
-  // Keyboard controls for lightbox
   useEffect(() => {
     if (lbIndex === null || photoItems.length === 0) return;
     const onKey = (e) => {
@@ -85,7 +85,6 @@ export default function Services() {
     return () => window.removeEventListener('keydown', onKey);
   }, [lbIndex, photoItems.length]);
 
-  // Helper to map a clicked photo src to its index in photoItems
   const photoIndexBySrc = useMemo(() => {
     const m = {};
     photoItems.forEach((p, i) => { m[p.img] = i; });
@@ -119,7 +118,6 @@ export default function Services() {
                     }}
                   >
                     <div className="relative z-10 p-6">
-                      {/* Title chip */}
                       <div className="inline-flex items-center gap-2 bg-black/60 backdrop-blur px-4 py-2 rounded-md">
                         <s.icon size={22} className="text-yellow-500 transition-colors duration-200 group-hover:text-yellow-400" />
                         <span className="text-lg font-semibold font-display uppercase tracking-wide text-yellow-500 transition-colors duration-200 group-hover:text-yellow-400">
@@ -127,7 +125,6 @@ export default function Services() {
                         </span>
                       </div>
 
-                      {/* Service description */}
                       {s.description && (
                         <div className="mt-3 inline-block rounded-md bg-black/60 backdrop-blur px-4 py-3">
                           <p className="text-sm text-white/85 max-w-[52ch]">{s.description}</p>
@@ -172,14 +169,12 @@ export default function Services() {
                           </button>
                         </div>
 
-                        {/* Category description (only if present) */}
                         {active.description && (
                           <div className="mt-4 inline-block rounded-md bg-black/60 backdrop-blur px-4 py-3">
                             <p className="text-sm text-white/85 max-w-[68ch]">{active.description}</p>
                           </div>
                         )}
 
-                        {/* Work grid with fade+stagger */}
                         <div className="mt-5 rounded-xl bg-black/55 backdrop-blur px-5 py-6">
                           <motion.div
                             className="grid md:grid-cols-2 gap-6"
@@ -198,13 +193,11 @@ export default function Services() {
                                       allow="autoplay; fullscreen; picture-in-picture"
                                       allowFullScreen
                                     />
-                                    {/* KEEP video titles */}
                                     {item.title && (
                                       <h4 className="mt-2 text-lg font-semibold font-display">{item.title}</h4>
                                     )}
                                   </div>
                                 ) : item.img ? (
-                                  // Photo: no titles — click to open lightbox
                                   <div
                                     className="relative overflow-hidden rounded-md cursor-zoom-in"
                                     role="button"
@@ -295,7 +288,6 @@ export default function Services() {
             aria-modal="true"
             role="dialog"
           >
-            {/* Close (X) — on top of everything */}
             <button
               onClick={(e) => { e.stopPropagation(); setLbIndex(null); }}
               className="absolute top-4 right-4 md:top-6 md:right-6 z-50 rounded-full p-2 bg-white/10 hover:bg-white/20 text-white"
@@ -305,7 +297,6 @@ export default function Services() {
               <FiX className="h-6 w-6" />
             </button>
 
-            {/* Visible arrow buttons */}
             <button
               onClick={(e) => { e.stopPropagation(); setLbIndex((i) => (i - 1 + photoItems.length) % photoItems.length); }}
               className="hidden sm:flex absolute left-3 md:left-6 top-1/2 -translate-y-1/2 z-40 rounded-full p-2 bg-white/10 hover:bg-white/20 text-white"
@@ -323,7 +314,6 @@ export default function Services() {
               <FiChevronRight className="h-7 w-7" />
             </button>
 
-            {/* Big image */}
             <motion.img
               key={photoItems[lbIndex].img}
               src={photoItems[lbIndex].img}
@@ -335,7 +325,6 @@ export default function Services() {
               onClick={(e) => e.stopPropagation()}
             />
 
-            {/* Invisible wide hit areas (safe top gap so X isn't an arrow) */}
             <button
               className="absolute left-0 top-16 md:top-20 bottom-0 w-1/3 md:w-1/4 z-20"
               onClick={(e) => { e.stopPropagation(); setLbIndex((i) => (i - 1 + photoItems.length) % photoItems.length); }}

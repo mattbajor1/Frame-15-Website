@@ -43,7 +43,7 @@ export default function Contact() {
       <div className="max-w-3xl mx-auto">
         <h2 className="text-4xl font-bold text-center mb-2">Contact</h2>
         <p className="text-center text-neutral-600 mb-10">
-          Tell us a bit about your project and we’ll reach out.
+          Tell us a bit about your project.
         </p>
 
         <form
@@ -150,34 +150,6 @@ export default function Contact() {
               </select>
             </label>
           </div>
-
-          <fieldset className="grid grid-cols-1 gap-3">
-            <legend className="text-sm font-medium">Project type*</legend>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {[
-                'Commercial / Ad',
-                'Brand Film',
-                'Social Content',
-                'Doc / Story',
-                'Design / Branding',
-                'Photography',
-              ].map((label) => (
-                <label
-                  key={label}
-                  className="flex items-center gap-3 rounded-xl border border-neutral-200 px-4 py-3"
-                >
-                  <input
-                    type="checkbox"
-                    name="projectType[]"
-                    value={label}
-                    className="h-4 w-4"
-                    required={false}
-                  />
-                  <span className="text-sm">{label}</span>
-                </label>
-              ))}
-            </div>
-          </fieldset>
 
           <label className="flex flex-col gap-2">
             <span className="text-sm font-medium">Tell us about the project*</span>

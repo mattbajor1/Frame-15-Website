@@ -44,7 +44,7 @@ const team = [
     role: 'Cinematographer & Rigging Engineer',
     roleWord: 'RIGGING',
     photo: '/images/Frame15_Profiles_Jonas.jpg',
-    bio: `Jonas makes motion possible. If the shot seems impossible, he is already sketching the rig. From custom builds to safe and repeatable moves, Jonas engineers pathways for the camera to feel weightless. His background in cinematography keeps the focus on the story, so every technical choice serves the creative goal. Whether he is designing a high speed tracking shot or rigging for an unconventional angle, Jonas blends innovation with safety and expands what is possible on set.`,
+    bio: `Jonas makes motion possible. If the shot seems impossible, he is already sketching the rig. From custom builds to safe and repeatable moves, Jonas engineers pathways for the camera to feel weightless. His approach on cinematography keeps the focus on the story, so every technical choice serves the creative goal. Whether he is designing a high speed tracking shot or rigging for an unconventional angle, Jonas blends innovation with safety and expands what is possible on set.`,
   },
   {
     name: 'Joel Rader',

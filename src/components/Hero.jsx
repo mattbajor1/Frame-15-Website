@@ -17,19 +17,16 @@ export default function Hero() {
   });
 
   const overlayOpacity = useTransform(scrollYProgress, [0, 0.6, 1], [1, 0.2, 0]);
-  const titleOpacity   = useTransform(scrollYProgress, [0, 0.35, 0.7], [1, 0.6, 0]);
-  const titleY         = useTransform(scrollYProgress, [0, 0.7], [0, -40]);
-  const titleScale     = useTransform(scrollYProgress, [0, 1], [1, 0.96]);
   const cueOpacity     = useTransform(scrollYProgress, [0, 0.25, 0.5], [1, 0.6, 0]);
 
   const loadVimeo = () =>
     new Promise((resolve) => {
-      if (window.Vimeo && window.Vimeo.Player) return resolve();
-      const script = document.createElement('script');
-      script.src = 'https://player.vimeo.com/api/player.js';
-      script.async = true;
-      script.onload = resolve;
-      document.body.appendChild(script);
+      if (window.Vimeo?.Player) return resolve();
+      const s = document.createElement('script');
+      s.src = 'https://player.vimeo.com/api/player.js';
+      s.async = true;
+      s.onload = resolve;
+      document.body.appendChild(s);
     });
 
   useEffect(() => {
@@ -48,17 +45,16 @@ export default function Hero() {
         await p.ready();
         if (!cancelled) {
           await p.setMuted(true);
+          await p.setVolume(0.8); // set a sane volume for when we unmute
           setMuted(true);
           setVideoReady(true);
         }
-      } catch {
-        /* no-op */
-      }
+      } catch {}
     })();
 
     return () => {
       cancelled = true;
-      if (playerRef.current?.destroy) playerRef.current.destroy().catch(() => {});
+      playerRef.current?.destroy?.().catch(() => {});
       playerRef.current = null;
       mountedRef.current = false;
     };
@@ -67,26 +63,31 @@ export default function Hero() {
   const toggleMute = async () => {
     const p = playerRef.current;
     if (!p) return;
+
     try {
       const isMuted = await p.getMuted();
+
+      // Update UI immediately
+      setMuted(!isMuted);
+
       if (isMuted) {
         await p.setMuted(false);
+        await p.setVolume(0.8);
         await p.play();
       } else {
         await p.setMuted(true);
       }
-      setMuted(await p.getMuted());
+
+      // Final sync (in case browser blocks anything)
+      const finalMuted = await p.getMuted();
+      if (finalMuted !== (!isMuted)) setMuted(finalMuted);
     } catch (e) {
       console.error('Mute toggle failed:', e);
     }
   };
 
   return (
-    <section
-      ref={sectionRef}
-      id="home"
-      className="relative w-full h-screen overflow-hidden bg-black"
-    >
+    <section ref={sectionRef} id="home" className="relative w-full h-screen overflow-hidden bg-black">
       {/* Background video */}
       <div className="absolute inset-0 w-full h-full z-0">
         {!videoReady && (
@@ -130,7 +131,11 @@ export default function Hero() {
       <button
         onClick={toggleMute}
         aria-label={muted ? 'Unmute video' : 'Mute video'}
-        className="absolute bottom-6 right-6 z-30 p-3 rounded-full bg-white/90 text-black hover:bg-white shadow"
+        aria-pressed={!muted}
+        className={`absolute bottom-6 right-6 z-30 p-3 rounded-full shadow transition
+          ${muted ? 'bg-white/90 text-black hover:bg-white' : 'bg-yellow-400 text-black hover:bg-yellow-300'}
+        `}
+        title={muted ? 'Sound off' : 'Sound on'}
       >
         {muted ? <FiVolumeX size={20} /> : <FiVolume2 size={20} />}
       </button>
