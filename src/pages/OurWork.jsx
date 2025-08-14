@@ -31,6 +31,8 @@ const services = [
     work: [
       { title: 'Lake Champlain', vimeoEmbed: 'https://player.vimeo.com/video/1109222906?h=a384f20fa0&title=0&byline=0&portrait=0' },
       { title: 'Sunset', vimeoEmbed: 'https://player.vimeo.com/video/1109220783?h=dc686fba43&title=0&byline=0&portrait=0' },
+      { title: 'Burlington High School Demolition', vimeoEmbed: 'https://player.vimeo.com/video/1109214423?h=60a7107822&title=0&byline=0&portrait=0' },
+      { title: 'S&D Mowing', vimeoEmbed: 'https://player.vimeo.com/video/1109223375?h=e4c296cffd&title=0&byline=0&portrait=0' },
     ],
   },
   {
