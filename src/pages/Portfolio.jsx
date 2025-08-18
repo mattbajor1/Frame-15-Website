@@ -1,7 +1,9 @@
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+// src/pages/Portfolio.jsx
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { FiX, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
-import itemsAll from '../data/portfolio';
+import useCloudinaryAssets from '../hooks/useCloudinaryAssets';
+import JustifiedGallery from '../components/JustifiedGallery';
 
 function useHashFlag(flag = '#portfolio') {
   const [open, setOpen] = useState(() => typeof window !== 'undefined' && window.location.hash === flag);
@@ -17,11 +19,28 @@ function clearHash() {
   window.history.replaceState(null, '', url);
 }
 
+// Sharp Cloudinary URL for lightbox (no secrets)
+function cldFull({ public_id, type = 'image', maxW = 3000 }) {
+  const cloud = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+  const rt = type === 'video' ? 'video' : 'image';
+  const viewportW = typeof window !== 'undefined' ? window.innerWidth : 1600;
+  const w = Math.min(maxW, Math.ceil(viewportW * 1.5));
+  if (!cloud || !public_id) return '';
+  return `https://res.cloudinary.com/${cloud}/${rt}/upload/f_auto,q_auto,c_limit,w_${w}/${public_id}`;
+}
+
 export default function Portfolio() {
   const [open, setOpen] = useHashFlag('#portfolio');
-  const [lightbox, setLightbox] = useState(null); 
-  const items = useMemo(() => itemsAll, []);
+  const [lightbox, setLightbox] = useState(null);
 
+  const { items, loading, error, hasMore, loadMore } = useCloudinaryAssets({
+    folder: 'Frame 15 Photos',
+    types: 'image',
+    includeSubfolders: false,
+    pageSize: 40,
+  });
+
+  // Keyboard controls
   useEffect(() => {
     const onKey = (e) => {
       if (!open) return;
@@ -29,9 +48,9 @@ export default function Portfolio() {
         if (lightbox !== null) setLightbox(null);
         else { clearHash(); setOpen(false); }
       }
-      if (lightbox !== null) {
+      if (lightbox !== null && items.length) {
         if (e.key === 'ArrowRight') setLightbox((i) => Math.min(i + 1, items.length - 1));
-        if (e.key === 'ArrowLeft') setLightbox((i) => Math.max(i - 1, 0));
+        if (e.key === 'ArrowLeft')  setLightbox((i) => Math.max(i - 1, 0));
       }
     };
     window.addEventListener('keydown', onKey);
@@ -42,6 +61,27 @@ export default function Portfolio() {
     if (lightbox !== null) setLightbox(null);
     else { clearHash(); setOpen(false); }
   }, [lightbox, setOpen]);
+
+  // Infinite scroll sentinel
+  const sentinelRef = useRef(null);
+  useEffect(() => {
+    if (!open) return;
+    const el = sentinelRef.current;
+    if (!el) return;
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry.isIntersecting && hasMore && !loading) {
+          loadMore();
+        }
+      },
+      { root: null, rootMargin: '800px 0px 800px 0px', threshold: 0 }
+    );
+
+    io.observe(el);
+    return () => io.disconnect();
+  }, [open, hasMore, loading, loadMore]);
 
   return (
     <AnimatePresence>
@@ -57,6 +97,7 @@ export default function Portfolio() {
             initial={{ scale: 0.995, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.995, opacity: 0 }}
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Header */}
             <div className="sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-neutral-200">
               <div className="px-4 md:px-6 lg:px-8 py-6 flex items-center justify-between">
                 <div>
@@ -73,40 +114,46 @@ export default function Portfolio() {
               </div>
             </div>
 
+            {/* Content */}
             <div className="px-2 sm:px-4 md:px-6 lg:px-8 py-6">
-              <motion.div
-                layout
-                className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-4 [column-fill:_balance]"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-              >
-                {items.map((item, i) => (
-                  <motion.figure
-                    key={item.id || item.src}
-                    layout
-                    className="group mb-4 break-inside-avoid overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm cursor-zoom-in"
-                    whileHover={{ y: -2 }}
-                    transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-                    onClick={() => setLightbox(i)}
-                  >
-                    <img
-                      src={item.src}
-                      srcSet={item.srcSet || undefined}
-                      sizes="(min-width:1280px) 20vw, (min-width:1024px) 25vw, (min-width:640px) 50vw, 100vw"
-                      alt={item.alt || ''}
-                      decoding="async"
-                      loading={i < 8 ? 'eager' : 'lazy'}
-                      fetchpriority={i < 8 ? 'high' : 'low'}
-                      className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                    />
-                  </motion.figure>
-                ))}
-              </motion.div>
+              {error && (
+                <div className="mb-6 rounded-xl bg-red-50 p-4 text-sm text-red-700">
+                  {error}
+                </div>
+              )}
+
+              {/* Justified, no-gap gallery — hero rows OFF */}
+              <JustifiedGallery
+                items={items}
+                onItemClick={(i) => setLightbox(i)}
+                targetRowHeight={320}
+                gutter={16}
+                heroEvery={0}      // <- ensures no full-width hero rows are rendered
+                heroHeight={520}
+                className="relative"
+              />
+
+              {/* Initial skeletons */}
+              {loading && items.length === 0 &&
+                <div className="mt-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div key={`ph-${i}`} className="h-56 rounded-xl bg-neutral-100 animate-pulse" />
+                  ))}
+                </div>
+              }
+
+              {/* Sentinel → auto-load next page */}
+              <div ref={sentinelRef} className="h-10 w-full" />
+
+              {!hasMore && items.length > 0 && (
+                <p className="mt-6 text-center text-sm text-neutral-500">End of results</p>
+              )}
             </div>
           </motion.div>
 
+          {/* Lightbox */}
           <AnimatePresence>
-            {lightbox !== null && (
+            {lightbox !== null && items[lightbox] && (
               <motion.div
                 className="fixed inset-0 z-[90] bg-black/90 text-white flex items-center justify-center p-4"
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -138,9 +185,12 @@ export default function Portfolio() {
                 </button>
 
                 <motion.img
-                  key={items[lightbox].src}
-                  src={items[lightbox].src}
-                  alt=""
+                  key={items[lightbox].public_id || items[lightbox].src}
+                  src={
+                    cldFull({ public_id: items[lightbox].public_id, type: items[lightbox].type }) ||
+                    items[lightbox].src
+                  }
+                  alt={items[lightbox].alt || ''}
                   className="max-h-[88vh] w-auto rounded-xl shadow-2xl z-30"
                   initial={{ scale: 0.96, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
@@ -148,6 +198,7 @@ export default function Portfolio() {
                   onClick={(e) => e.stopPropagation()}
                 />
 
+                {/* Large click areas */}
                 <button
                   className="absolute left-0 top-16 md:top-20 bottom-0 w-1/3 md:w-1/4 z-20"
                   onClick={(e) => { e.stopPropagation(); setLightbox((i) => Math.max(0, i - 1)); }}
