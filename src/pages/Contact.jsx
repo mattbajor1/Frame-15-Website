@@ -71,7 +71,7 @@ export default function Contact() {
                 name="name"
                 autoComplete="name"
                 className="w-full rounded-xl border border-neutral-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-black"
-                placeholder="Jane Doe"
+                placeholder="Name"
               />
             </label>
 
@@ -83,7 +83,7 @@ export default function Contact() {
                 name="email"
                 autoComplete="email"
                 className="w-full rounded-xl border border-neutral-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-black"
-                placeholder="jane@company.com"
+                placeholder="Email@company.com"
               />
             </label>
           </div>
@@ -141,7 +141,7 @@ export default function Contact() {
                 defaultValue=""
               >
                 <option value="" disabled>
-                  When do you need this?
+                  Deliver by
                 </option>
                 <option value="ASAP">ASAP</option>
                 <option value="2–4 weeks">2–4 weeks</option>
@@ -189,7 +189,6 @@ export default function Contact() {
         </form>
 
         <p className="mt-6 text-center text-sm text-neutral-500">
-          Prefer email?{' '}
           <a href="mailto:info@frame15.com" className="underline">
             info@frame15.com
           </a>
