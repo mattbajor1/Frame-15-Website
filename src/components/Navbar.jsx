@@ -49,7 +49,7 @@ export default function Navbar() {
           {/* LEFT: logo */}
           <a href="#home" className="justify-self-start flex items-center" title="Go to home">
             <motion.img
-              src="/images/Logo.png"
+              src="/images/logo.png"
               alt="Frame 15"
               className="h-12 md:h-14 w-auto"
               style={{ opacity: logoOpacity }}

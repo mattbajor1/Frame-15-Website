@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import useCloudinaryAssets from "../hooks/useCloudinaryAssets";
-import Heading from "../components/Heading"; 
+import Heading from "../components/Heading"; // match Services heading
 
 const CLOUD = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
 
+// Sharp Cloudinary image for the main stage (no secrets)
 function cldImage({ public_id, type = "image", width, height, mode = "limit" }) {
   if (!CLOUD || !public_id) return null;
   const rt = type === "video" ? "video" : "image";
@@ -14,20 +15,21 @@ function cldImage({ public_id, type = "image", width, height, mode = "limit" }) 
   return `https://res.cloudinary.com/${CLOUD}/${rt}/upload/f_auto,q_auto,g_auto,${crop}${w}${h}/${public_id}`;
 }
 
+// Thumbnail (poster for video)
 function cldThumb({ public_id, type = "image", width = 240, height = 140 }) {
   if (!CLOUD || !public_id) return null;
   const rt = type === "video" ? "video" : "image";
-  const ext = type === "video" ? ".jpg" : ""; 
+  const ext = type === "video" ? ".jpg" : ""; // jpg poster for video
   return `https://res.cloudinary.com/${CLOUD}/${rt}/upload/f_auto,q_auto,g_auto,c_fill,w_${width},h_${height}/${public_id}${ext}`;
 }
 
-export default function BTSCarousel({
+export default function BTS({
   title = "Behind the Scenes",
-  subtitle = "See what we do together - how we prep, collaborate, and capture.",
-  folder = "BTS",            
+  subtitle = "See what we do together — how we prep, collaborate, and capture.",
+  folder = "BTS",            // set to your exact Cloudinary BTS folder
   includeSubfolders = true,
 }) {
-
+  // Pull images + videos
   const { items, loading, error, hasMore, loadMore } = useCloudinaryAssets({
     folder,
     types: "all",
@@ -35,6 +37,7 @@ export default function BTSCarousel({
     pageSize: 60,
   });
 
+  // Optional: put videos first (remove to keep natural order)
   const ordered = useMemo(() => {
     return [...items].sort((a, b) => (a.type === "video" ? -1 : 0));
   }, [items]);
@@ -43,6 +46,7 @@ export default function BTSCarousel({
   const stageRef = useRef(null);
   const railRef = useRef(null);
 
+  // Measure stage for crisp sizing + provide intrinsic sizes
   const [stageW, setStageW] = useState(1200);
   const [stageH, setStageH] = useState(600);
   useEffect(() => {
@@ -50,7 +54,7 @@ export default function BTSCarousel({
     const ro = new ResizeObserver(([entry]) => {
       const w = Math.floor(entry.contentRect.width);
       const maxH = Math.floor(window.innerHeight * 0.68);
-      const h = Math.min(maxH, Math.round((w * 9) / 16)); 
+      const h = Math.min(maxH, Math.round((w * 9) / 16)); // ~16:9
       setStageW(w);
       setStageH(Math.max(360, h));
     });
@@ -58,7 +62,7 @@ export default function BTSCarousel({
     return () => ro.disconnect();
   }, []);
 
-
+  // Keyboard navigation
   useEffect(() => {
     const handler = (e) => {
       if (e.key === "ArrowLeft") prev();
@@ -72,11 +76,13 @@ export default function BTSCarousel({
   const next = useCallback(() => {
     setIdx((i) => {
       const ni = Math.min(ordered.length - 1, i + 1);
+      // If close to end, fetch more
       if (ni > ordered.length - 6 && hasMore && !loading) loadMore();
       return ni;
     });
   }, [ordered.length, hasMore, loading, loadMore]);
 
+  // Center selected thumb in the rail
   useEffect(() => {
     if (!railRef.current) return;
     const el = railRef.current.querySelector(`[data-thumb="${idx}"]`);
@@ -89,7 +95,7 @@ export default function BTSCarousel({
 
   return (
     <section id="bts" className="px-4 md:px-6 lg:px-8 py-24 bg-black text-white">
-      {/* MATCHED HEADING (same component + styling as Services) */}
+      {/* Heading (matches Services) */}
       <div className="max-w-6xl mx-auto px-4">
         <Heading
           title="Behind the Scenes"
@@ -126,6 +132,8 @@ export default function BTSCarousel({
                   controls
                   playsInline
                   className="h-full w-full object-cover"
+                  width={stageW}
+                  height={stageH}
                 />
               ) : (
                 <img
@@ -143,6 +151,8 @@ export default function BTSCarousel({
                   className="h-full w-full object-cover"
                   loading="eager"
                   decoding="async"
+                  width={stageW}
+                  height={stageH}
                 />
               )
             ) : (
@@ -200,6 +210,8 @@ export default function BTSCarousel({
                     className="h-full w-full object-cover"
                     loading="lazy"
                     decoding="async"
+                    width={220}
+                    height={124}
                   />
                   {it.type === "video" && (
                     <span className="absolute bottom-1 right-1 text-[10px] px-2 py-0.5 rounded bg-black/70">

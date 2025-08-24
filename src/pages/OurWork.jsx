@@ -1,4 +1,3 @@
-// src/components/Services.jsx
 import { useState, useMemo, useEffect } from 'react';
 import { FiVideo, FiCamera, FiAperture, FiX, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
@@ -58,22 +57,40 @@ const services = [
 ];
 
 const ease = [0.22, 1, 0.36, 1];
-const tCard = { duration: 0.5, ease };
-const tContent = { duration: 0.35, ease };
-const gridVariants = { hidden: {}, visible: { transition: { staggerChildren: 0.08 } } };
-const itemVariants = { hidden: { opacity: 0, y: 18 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease } } };
+const tCard = { duration: 0.28, ease, type: 'tween' };
+const tContent = { duration: 0.28, ease, type: 'tween' };
 
-export default function Services() {
+const gridVariants = { hidden: {}, visible: { transition: { staggerChildren: 0.08 } } };
+const itemVariants = { hidden: { opacity: 0, y: 18 }, visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease } } };
+
+export default function OurWork() {
   const [expanded, setExpanded] = useState(null);
   const active = useMemo(() => services.find((s) => s.id === expanded) ?? null, [expanded]);
 
-  // PHOTO LIGHTBOX STATE
-  const photoItems = useMemo(
-    () => (active ? active.work.filter((w) => w.img) : []),
-    [active]
-  );
-  const [lbIndex, setLbIndex] = useState(null);
+  // mount heavy content (iframes) only after the expand layout animation completes
+  const [contentReady, setContentReady] = useState(false);
 
+  // closing flow to avoid "flash back to small card"
+  const [closing, setClosing] = useState(false);
+  const startClose = () => {
+    if (!expanded) return;
+    setClosing(true);
+    setContentReady(false);
+    // after fade-out, unmount expanded and show grid
+    setTimeout(() => {
+      setExpanded(null);
+      setClosing(false);
+    }, 300); // ~ tCard
+  };
+
+  useEffect(() => {
+    // whenever we open a new one, content will mount after layout finishes
+    if (expanded) setContentReady(false);
+  }, [expanded]);
+
+  // PHOTO LIGHTBOX
+  const photoItems = useMemo(() => (active ? active.work.filter((w) => w.img) : []), [active]);
+  const [lbIndex, setLbIndex] = useState(null);
   useEffect(() => { setLbIndex(null); }, [expanded]);
 
   useEffect(() => {
@@ -117,6 +134,7 @@ export default function Services() {
                       backgroundImage: bgUrl(s.bgImage),
                       backgroundSize: 'cover',
                       backgroundPosition: 'center',
+                      willChange: 'transform',
                     }}
                   >
                     <div className="relative z-10 p-6">
@@ -129,7 +147,7 @@ export default function Services() {
 
                       {s.description && (
                         <div className="mt-3 inline-block rounded-md bg-black/60 backdrop-blur px-4 py-3">
-                          <p className="text-sm text-white/85 max-w-[52ch]">{s.description}</p>
+                          <p className="text-sm text-white/90 max-w-[52ch]">{s.description}</p>
                         </div>
                       )}
                     </div>
@@ -139,17 +157,27 @@ export default function Services() {
                 ))}
 
                 <AnimatePresence>
-                  {expanded && active && (
+                  {(expanded && active) && (
                     <motion.div
                       key={active.id}
-                      layoutId={`card-${active.id}`}
+                      // Disable shared-layout on close so it fades instead of "shrinking back"
+                      layoutId={closing ? undefined : `card-${active.id}`}
                       className="relative rounded-xl overflow-hidden border border-white/10"
                       transition={tCard}
                       style={{
-                        backgroundImage: bgUrl(active.bgImage),
+                        // hide bg image during close to avoid any single-frame flash
+                        backgroundImage: closing ? 'none' : bgUrl(active.bgImage),
                         backgroundSize: 'cover',
                         backgroundPosition: 'center',
+                        willChange: 'transform',
+                        contain: 'layout paint',
                       }}
+                      onLayoutAnimationComplete={() => {
+                        if (!closing) setContentReady(true);
+                      }}
+                      initial={{ opacity: 0.98 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }} // fade the whole thing out on close
                     >
                       <motion.div
                         className="relative z-10 p-6 md:p-8"
@@ -164,7 +192,7 @@ export default function Services() {
                             <h3 className="text-2xl md:text-3xl font-bold font-display uppercase">{active.name}</h3>
                           </div>
                           <button
-                            onClick={() => setExpanded(null)}
+                            onClick={startClose}
                             className="hidden md:inline-block bg-white text-black px-4 py-2 rounded font-bold"
                           >
                             Close
@@ -173,7 +201,7 @@ export default function Services() {
 
                         {active.description && (
                           <div className="mt-4 inline-block rounded-md bg-black/60 backdrop-blur px-4 py-3">
-                            <p className="text-sm text-white/85 max-w-[68ch]">{active.description}</p>
+                            <p className="text-sm text-white/90 max-w-[68ch]">{active.description}</p>
                           </div>
                         )}
 
@@ -184,61 +212,69 @@ export default function Services() {
                             animate="visible"
                             variants={gridVariants}
                           >
-                            {active.work.map((item, i) => (
-                              <motion.div key={i} variants={itemVariants}>
-                                {item.vimeoEmbed ? (
-                                  <div className="aspect-video w-full">
-                                    <iframe
-                                      src={item.vimeoEmbed}
-                                      className="w-full h-full rounded-md"
-                                      frameBorder="0"
-                                      allow="autoplay; fullscreen; picture-in-picture"
-                                      allowFullScreen
-                                    />
-                                    {item.title && (
-                                      <h4 className="mt-2 text-lg font-semibold font-display">{item.title}</h4>
-                                    )}
-                                  </div>
-                                ) : item.img ? (
-                                  <div
-                                    className="relative overflow-hidden rounded-md cursor-zoom-in"
-                                    role="button"
-                                    tabIndex={0}
-                                    onClick={() => setLbIndex(photoIndexBySrc[item.img] ?? 0)}
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter' || e.key === ' ') setLbIndex(photoIndexBySrc[item.img] ?? 0);
-                                    }}
-                                  >
-                                    <img
-                                      src={item.img}
-                                      alt=""
-                                      className="w-full h-auto object-cover"
-                                      decoding="async"
-                                      loading="lazy"
-                                    />
-                                  </div>
-                                ) : null}
-                              </motion.div>
-                            ))}
+                            {contentReady ? (
+                              active.work.map((item, i) => (
+                                <motion.div key={i} variants={itemVariants}>
+                                  {item.vimeoEmbed ? (
+                                    <div className="aspect-video w-full">
+                                      <iframe
+                                        src={item.vimeoEmbed}
+                                        className="w-full h-full rounded-md"
+                                        title={item.title || 'Vimeo video'}
+                                        frameBorder="0"
+                                        allow="autoplay; fullscreen; picture-in-picture"
+                                        allowFullScreen
+                                        loading="lazy"
+                                        referrerPolicy="origin-when-cross-origin"
+                                      />
+                                      {item.title && (
+                                        <h4 className="mt-2 text-lg font-semibold font-display">{item.title}</h4>
+                                      )}
+                                    </div>
+                                  ) : item.img ? (
+                                    <div
+                                      className="relative overflow-hidden rounded-md cursor-zoom-in"
+                                      role="button"
+                                      tabIndex={0}
+                                      onClick={() => setLbIndex(photoIndexBySrc[item.img] ?? 0)}
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter' || e.key === ' ') setLbIndex(photoIndexBySrc[item.img] ?? 0);
+                                      }}
+                                    >
+                                      <img
+                                        src={item.img}
+                                        alt=""
+                                        className="w-full h-auto object-cover"
+                                        decoding="async"
+                                        loading="lazy"
+                                      />
+                                    </div>
+                                  ) : null}
+                                </motion.div>
+                              ))
+                            ) : (
+                              // light placeholders while expanding
+                              Array.from({ length: 4 }).map((_, i) => (
+                                <div key={`ph-${i}`} className="aspect-video w-full rounded-md bg-white/10 animate-pulse" />
+                              ))
+                            )}
                           </motion.div>
                         </div>
 
                         <button
-                          onClick={() => setExpanded(null)}
+                          onClick={startClose}
                           className="mt-6 md:hidden bg-white text-black px-4 py-2 rounded font-bold w-full"
                         >
                           Close
                         </button>
                       </motion.div>
-
-                      <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/40 to-transparent" />
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
             </div>
 
-            {/* RIGHT: skinny switcher */}
+            {/* RIGHT: skinny switcher — only when expanded; include active (greyed out) */}
             <AnimatePresence>
               {expanded && (
                 <motion.aside
@@ -249,28 +285,38 @@ export default function Services() {
                   transition={tContent}
                   className="hidden md:flex w-[280px] shrink-0 flex-col gap-4"
                 >
-                  {services.filter((s) => s.id !== expanded).map((s) => (
-                    <button
-                      key={s.id}
-                      onClick={() => setExpanded(s.id)}
-                      className="relative rounded-lg overflow-hidden border border-white/10 text-left transform-gpu transition-transform duration-300 hover:scale-[1.02]"
-                      style={{
-                        backgroundImage: bgUrl(s.bgImage),
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                      }}
-                    >
-                      <div className="p-4">
-                        <div className="inline-flex items-center gap-2 rounded-md bg-black/55 backdrop-blur px-3 py-2">
-                          <s.icon size={18} className="text-yellow-500 transition-colors duration-200 group-hover:text-yellow-400" />
-                          <h4 className="text-sm font-semibold font-display uppercase tracking-wide text-yellow-500 transition-colors duration-200 group-hover:text-yellow-400">
-                            {s.name}
-                          </h4>
+                  {services.map((s) => {
+                    const isActive = s.id === expanded;
+                    return (
+                      <button
+                        key={s.id}
+                        onClick={() => !isActive && setExpanded(s.id)}
+                        disabled={isActive || closing}
+                        className={`relative rounded-lg overflow-hidden border text-left transform-gpu transition-transform duration-300 ${
+                          isActive
+                            ? 'border-white/20 opacity-50 cursor-default'
+                            : 'border-white/10 hover:scale-[1.02]'
+                        }`}
+                        style={{
+                          backgroundImage: bgUrl(s.bgImage),
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center',
+                          willChange: 'transform',
+                        }}
+                        aria-current={isActive ? 'true' : undefined}
+                      >
+                        <div className="p-4">
+                          <div className="inline-flex items-center gap-2 bg-black/55 backdrop-blur px-3 py-2 rounded-md">
+                            <s.icon size={18} className="text-yellow-500" />
+                            <h4 className="text-sm font-semibold font-display uppercase tracking-wide text-yellow-500">
+                              {s.name}
+                            </h4>
+                          </div>
                         </div>
-                      </div>
-                      <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/35 to-transparent" />
-                    </button>
-                  ))}
+                        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/35 to-transparent" />
+                      </button>
+                    );
+                  })}
                 </motion.aside>
               )}
             </AnimatePresence>
@@ -301,7 +347,7 @@ export default function Services() {
 
             <button
               onClick={(e) => { e.stopPropagation(); setLbIndex((i) => (i - 1 + photoItems.length) % photoItems.length); }}
-              className="hidden sm:flex absolute left-3 md:left-6 top-1/2 -translate-y-1/2 z-40 rounded-full p-2 bg-white/10 hover:bg-white/20 text-white"
+              className="hidden sm:flex absolute left-3 md:left-6 top-1/2 -translate-y-1/2 z-40 rounded-full p-2 bg:white/10 hover:bg-white/20 text-white"
               aria-label="Previous image"
               title="Previous"
             >
@@ -309,7 +355,7 @@ export default function Services() {
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); setLbIndex((i) => (i + 1) % photoItems.length); }}
-              className="hidden sm:flex absolute right-3 md:right-6 top-1/2 -translate-y-1/2 z-40 rounded-full p-2 bg-white/10 hover:bg-white/20 text-white"
+              className="hidden sm:flex absolute right-3 md:right-6 top-1/2 -translate-y-1/2 z-40 rounded-full p-2 bg:white/10 hover:bg-white/20 text-white"
               aria-label="Next image"
               title="Next"
             >
@@ -325,19 +371,6 @@ export default function Services() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.96, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-            />
-
-            <button
-              className="absolute left-0 top-16 md:top-20 bottom-0 w-1/3 md:w-1/4 z-20"
-              onClick={(e) => { e.stopPropagation(); setLbIndex((i) => (i - 1 + photoItems.length) % photoItems.length); }}
-              aria-label="Previous"
-              title="Previous"
-            />
-            <button
-              className="absolute right-0 top-16 md:top-20 bottom-0 w-1/3 md:w-1/4 z-20"
-              onClick={(e) => { e.stopPropagation(); setLbIndex((i) => (i + 1) % photoItems.length); }}
-              aria-label="Next"
-              title="Next"
             />
           </motion.div>
         )}

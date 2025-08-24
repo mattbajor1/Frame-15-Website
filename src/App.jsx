@@ -6,7 +6,7 @@ import About from './pages/About';
 import Contact from './pages/Contact';
 import useEasterEggs from './hooks/useEasterEggs';
 import Portfolio from './pages/Portfolio';
-import BTS from './pages/BTS'; 
+import BTS from './pages/BTS';
 
 export default function App() {
   const { showBlooper, setShowBlooper } = useEasterEggs();
@@ -17,17 +17,16 @@ export default function App() {
       <main className="flex-grow">
         <Home />
         <OurWork />
-        <About />              
-        <BTS          
-          folder="BTS"          
-          includeSubfolders={true}
-        />
+        <About />
+        <BTS folder="BTS" includeSubfolders={true} />
         <Contact />
       </main>
       <Footer />
 
+      {/* Portfolio modal */}
       <Portfolio />
 
+      {/* Blooper Easter egg overlay */}
       {showBlooper && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[100]">
           <div className="relative max-w-4xl w-[92vw]">

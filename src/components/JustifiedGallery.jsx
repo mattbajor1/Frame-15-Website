@@ -1,7 +1,7 @@
 // src/components/JustifiedGallery.jsx
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 
-/** Build a Cloudinary URL (no secrets needed). */
+// Build Cloudinary URL (public-only)
 function cldUrl({ cloudName, public_id, type = "image", width, height, mode = "fill" }) {
   const rt = type === "video" ? "video" : "image";
   const crop = mode === "limit" ? "c_limit" : "c_fill";
@@ -22,135 +22,136 @@ export default function JustifiedGallery({
   heroEvery = 0,          // 0 = off; e.g. 6 => every 6th row is full-bleed
   heroHeight = 520,
   className = "",
-  cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME, // public var; set this!
+  cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME,
 }) {
-  const ref = useRef(null);
-  const [W, setW] = useState(1200);
+  const containerRef = useRef(null);
 
+  const layout = useMemo(() => {
+    return computeLayout(items, targetRowHeight, gutter, heroEvery, heroHeight);
+  }, [items, targetRowHeight, gutter, heroEvery, heroHeight]);
+
+  // set container height to avoid reflow
   useEffect(() => {
-    if (!ref.current) return;
-    const ro = new ResizeObserver((entries) => {
-      setW(Math.max(0, Math.floor(entries[0].contentRect.width)));
-    });
-    ro.observe(ref.current);
-    return () => ro.disconnect();
-  }, []);
-
-  const boxes = useMemo(
-    () => layout(items, W, targetRowHeight, gutter, heroEvery, heroHeight),
-    [items, W, targetRowHeight, gutter, heroEvery, heroHeight]
-  );
-
-  const dpr = typeof window !== "undefined" ? Math.min(2, window.devicePixelRatio || 1) : 1.5;
+    const el = containerRef.current;
+    if (!el) return;
+    el.style.height = `${layout.containerHeight}px`;
+  }, [layout.containerHeight]);
 
   return (
-    <div
-      ref={ref}
-      data-gallery="justified"
-      className={className}
-      style={{ position: "relative", height: boxes.containerHeight, width: "100%" }}
-    >
-      {boxes.tiles.map((t) => {
-        const it = items[t.index];
-
-        // If cloudName is available, ask Cloudinary for a crisp, per-tile size.
-        // Otherwise fall back to whatever src the server gave us.
-        let src;
-        if (cloudName && it.public_id) {
-          const reqW = Math.round(t.width * dpr);
-          const reqH = Math.round(t.height * dpr);
-          src = cldUrl({
-            cloudName,
-            public_id: it.public_id,
-            type: it.type,
-            width: reqW,
-            height: reqH,
-            mode: "fill",
-          });
-        } else {
-          src = it.src; // fallback (will look like before)
-        }
+    <div ref={containerRef} className={`relative ${className}`} style={{ height: layout.containerHeight }}>
+      {layout.tiles.map((t, i) => {
+        const src =
+          (t.public_id &&
+            cldUrl({
+              cloudName,
+              public_id: t.public_id,
+              type: t.type,
+              width: t.width * 1.25,
+              height: t.height * 1.25,
+              mode: "fill",
+            })) ||
+          t.src;
 
         return (
-          <figure
+          <button
             key={t.key}
+            className="absolute overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm cursor-zoom-in group"
+            style={{ left: t.left, top: t.top, width: t.width, height: t.height }}
             onClick={() => onItemClick?.(t.index)}
-            className="group overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm cursor-zoom-in"
-            style={{
-              position: "absolute",
-              top: t.top, left: t.left, width: t.width, height: t.height,
-            }}
+            aria-label="Open image"
           >
             <img
               src={src}
-              alt={it.alt || ""}
+              alt={t.alt || ""}
               loading={t.index < 8 ? "eager" : "lazy"}
               decoding="async"
+              width={Math.round(t.width)}     // intrinsic size to reduce CLS
+              height={Math.round(t.height)}
               className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
             />
-          </figure>
+          </button>
         );
       })}
     </div>
   );
 }
 
-/** Flickr-style justified layout with optional full-bleed hero rows */
-function layout(items, containerWidth, targetRowHeight, gutter, heroEvery, heroHeight) {
-  if (!items?.length || containerWidth <= 0) return { tiles: [], containerHeight: 0 };
-
+function computeLayout(items, targetRowHeight, gutter, heroEvery, heroHeight) {
   const tiles = [];
   let y = 0;
   let row = [];
   let arSum = 0;
   let rowCount = 0;
 
-  const getAR = (it) => {
-    const w = it.width || 1600;
-    const h = it.height || 1000;
-    return Math.max(0.25, Math.min(4, w / h));
-  };
+  const flushRow = (isLast = false) => {
+    if (row.length === 0) return;
+    const containerWidth = typeof window !== "undefined" ? Math.min(1400, document.body.clientWidth - 64) : 1200;
 
-  let i = 0;
-  while (i < items.length) {
-    // optional hero row
-    if (heroEvery > 0 && row.length === 0 && rowCount > 0 && rowCount % heroEvery === 0) {
-      tiles.push({ index: i, key: `hero-${i}`, top: y, left: 0, width: containerWidth, height: heroHeight });
-      y += heroHeight + gutter;
-      rowCount++;
-      i++;
-      continue;
-    }
-
-    const ar = getAR(items[i]);
-    row.push({ index: i, ar });
-    arSum += ar;
-
-    const innerW = containerWidth - gutter * (row.length - 1);
-    const h = innerW / arSum;
-
-    if (h <= targetRowHeight * 1.25 || i === items.length - 1) {
-      const height = Math.max(140, Math.min(targetRowHeight * 1.25, h));
+    // hero row?
+    if (heroEvery > 0 && (rowCount + 1) % heroEvery === 0 && !isLast) {
+      const h = heroHeight;
       let x = 0;
-      row.forEach((r, j) => {
-        const w = r.ar * height;
+      row.forEach((r) => {
+        const w = (r.w / r.h) * h;
         tiles.push({
+          key: r.key,
           index: r.index,
-          key: `tile-${r.index}`,
-          top: y,
+          public_id: r.public_id,
+          type: r.type,
+          alt: r.alt,
           left: x,
-          width: j === row.length - 1 ? (containerWidth - x) : w, // stretch last tile to avoid hairline gaps
-          height,
+          top: y,
+          width: Math.min(containerWidth, w),
+          height: h,
         });
         x += w + gutter;
       });
-      y += height + gutter;
+      y += h + gutter;
       row = [];
       arSum = 0;
       rowCount++;
+      return;
     }
-    i++;
-  }
+
+    const availableW = containerWidth - gutter * (row.length - 1);
+    const h = Math.max(120, Math.min(targetRowHeight * (availableW / (arSum * targetRowHeight)), targetRowHeight * 1.35));
+    let x = 0;
+    row.forEach((r) => {
+      const w = (r.w / r.h) * h;
+      tiles.push({
+        key: r.key,
+        index: r.index,
+        public_id: r.public_id,
+        type: r.type,
+        alt: r.alt,
+        left: x,
+        top: y,
+        width: w,
+        height: h,
+      });
+      x += w + gutter;
+    });
+    y += h + gutter;
+    row = [];
+    arSum = 0;
+    rowCount++;
+  };
+
+  items.forEach((it, i) => {
+    const w = it.width || 1600;
+    const h = it.height || 900;
+    const ar = w / h;
+    row.push({ key: it.public_id || it.src || i, index: i, public_id: it.public_id, type: it.type, alt: it.alt, w, h });
+    arSum += ar;
+
+    const containerWidth = typeof window !== "undefined" ? Math.min(1400, document.body.clientWidth - 64) : 1200;
+    const estimatedW = arSum * targetRowHeight + gutter * (row.length - 1);
+    if (estimatedW > containerWidth && row.length > 1) {
+      flushRow();
+    }
+  });
+
+  flushRow(true);
 
   return { tiles, containerHeight: Math.max(0, y - gutter) };
 }

@@ -19,14 +19,13 @@ function clearHash() {
   window.history.replaceState(null, '', url);
 }
 
-// Sharp Cloudinary URL for lightbox (no secrets)
+const CLOUD = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
 function cldFull({ public_id, type = 'image', maxW = 3000 }) {
-  const cloud = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
   const rt = type === 'video' ? 'video' : 'image';
-  const viewportW = typeof window !== 'undefined' ? window.innerWidth : 1600;
-  const w = Math.min(maxW, Math.ceil(viewportW * 1.5));
-  if (!cloud || !public_id) return '';
-  return `https://res.cloudinary.com/${cloud}/${rt}/upload/f_auto,q_auto,c_limit,w_${w}/${public_id}`;
+  const vw = typeof window !== 'undefined' ? window.innerWidth : 1600;
+  const w = Math.min(maxW, Math.ceil(vw * 1.5));
+  if (!CLOUD || !public_id) return '';
+  return `https://res.cloudinary.com/${CLOUD}/${rt}/upload/f_auto,q_auto,c_limit,w_${w}/${public_id}`;
 }
 
 export default function Portfolio() {
@@ -122,13 +121,13 @@ export default function Portfolio() {
                 </div>
               )}
 
-              {/* Justified, no-gap gallery — hero rows OFF */}
+              {/* Justified, no hero rows */}
               <JustifiedGallery
                 items={items}
                 onItemClick={(i) => setLightbox(i)}
                 targetRowHeight={320}
                 gutter={16}
-                heroEvery={0}      // <- ensures no full-width hero rows are rendered
+                heroEvery={0}      // <- no full-width rows
                 heroHeight={520}
                 className="relative"
               />
@@ -144,10 +143,6 @@ export default function Portfolio() {
 
               {/* Sentinel → auto-load next page */}
               <div ref={sentinelRef} className="h-10 w-full" />
-
-              {!hasMore && items.length > 0 && (
-                <p className="mt-6 text-center text-sm text-neutral-500">End of results</p>
-              )}
             </div>
           </motion.div>
 
