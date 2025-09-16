@@ -1,5 +1,5 @@
 // src/components/JustifiedGallery.jsx
-import React, { useEffect, useMemo, useRef } from "react";
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 // Build Cloudinary URL (public-only)
 function cldUrl({ cloudName, public_id, type = "image", width, height, mode = "fill" }) {
@@ -11,147 +11,135 @@ function cldUrl({ cloudName, public_id, type = "image", width, height, mode = "f
 }
 
 /**
- * Justified gallery (no gaps) with optional hero rows.
- * items: { public_id, type, width, height, alt, src }
+ * Compute justified rows into tiles that exactly fill `containerWidth`.
+ * items: [{ public_id, type, width, height, alt, src }]
  */
-export default function JustifiedGallery({
-  items,
-  onItemClick,
-  targetRowHeight = 320,
-  gutter = 16,
-  heroEvery = 0,          // 0 = off; e.g. 6 => every 6th row is full-bleed
-  heroHeight = 520,
-  className = "",
-  cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME,
-}) {
-  const containerRef = useRef(null);
+function computeLayout(items, containerWidth, targetRowHeight, gutter) {
+  if (!containerWidth || containerWidth <= 0) {
+    return { tiles: [], containerHeight: 0 };
+  }
 
-  const layout = useMemo(() => {
-    return computeLayout(items, targetRowHeight, gutter, heroEvery, heroHeight);
-  }, [items, targetRowHeight, gutter, heroEvery, heroHeight]);
+  const W = Math.max(0, Math.floor(containerWidth));
 
-  // set container height to avoid reflow
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    el.style.height = `${layout.containerHeight}px`;
-  }, [layout.containerHeight]);
-
-  return (
-    <div ref={containerRef} className={`relative ${className}`} style={{ height: layout.containerHeight }}>
-      {layout.tiles.map((t, i) => {
-        const src =
-          (t.public_id &&
-            cldUrl({
-              cloudName,
-              public_id: t.public_id,
-              type: t.type,
-              width: t.width * 1.25,
-              height: t.height * 1.25,
-              mode: "fill",
-            })) ||
-          t.src;
-
-        return (
-          <button
-            key={t.key}
-            className="absolute overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm cursor-zoom-in group"
-            style={{ left: t.left, top: t.top, width: t.width, height: t.height }}
-            onClick={() => onItemClick?.(t.index)}
-            aria-label="Open image"
-          >
-            <img
-              src={src}
-              alt={t.alt || ""}
-              loading={t.index < 8 ? "eager" : "lazy"}
-              decoding="async"
-              width={Math.round(t.width)}     // intrinsic size to reduce CLS
-              height={Math.round(t.height)}
-              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-            />
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-function computeLayout(items, targetRowHeight, gutter, heroEvery, heroHeight) {
   const tiles = [];
-  let y = 0;
   let row = [];
   let arSum = 0;
-  let rowCount = 0;
+  let y = 0;
 
   const flushRow = (isLast = false) => {
-    if (row.length === 0) return;
-    const containerWidth = typeof window !== "undefined" ? Math.min(1400, document.body.clientWidth - 64) : 1200;
+    if (!row.length) return;
+    const h = isLast
+      ? targetRowHeight
+      : (W - gutter * (row.length - 1)) / arSum;
 
-    // hero row?
-    if (heroEvery > 0 && (rowCount + 1) % heroEvery === 0 && !isLast) {
-      const h = heroHeight;
-      let x = 0;
-      row.forEach((r) => {
-        const w = (r.w / r.h) * h;
-        tiles.push({
-          key: r.key,
-          index: r.index,
-          public_id: r.public_id,
-          type: r.type,
-          alt: r.alt,
-          left: x,
-          top: y,
-          width: Math.min(containerWidth, w),
-          height: h,
-        });
-        x += w + gutter;
-      });
-      y += h + gutter;
-      row = [];
-      arSum = 0;
-      rowCount++;
-      return;
-    }
-
-    const availableW = containerWidth - gutter * (row.length - 1);
-    const h = Math.max(120, Math.min(targetRowHeight * (availableW / (arSum * targetRowHeight)), targetRowHeight * 1.35));
     let x = 0;
-    row.forEach((r) => {
-      const w = (r.w / r.h) * h;
+    row.forEach((it, idx) => {
+      const w = Math.round(h * (it.w / it.h));
       tiles.push({
-        key: r.key,
-        index: r.index,
-        public_id: r.public_id,
-        type: r.type,
-        alt: r.alt,
+        key: it.key,
+        public_id: it.public_id,
+        type: it.type,
+        alt: it.alt,
         left: x,
         top: y,
         width: w,
-        height: h,
+        height: Math.round(h),
       });
       x += w + gutter;
     });
-    y += h + gutter;
+    y += Math.round(h) + gutter;
     row = [];
     arSum = 0;
-    rowCount++;
   };
 
   items.forEach((it, i) => {
-    const w = it.width || 1600;
-    const h = it.height || 900;
+    const w = Math.max(1, Number(it.width || it.w || 1600));
+    const h = Math.max(1, Number(it.height || it.h || 900));
     const ar = w / h;
-    row.push({ key: it.public_id || it.src || i, index: i, public_id: it.public_id, type: it.type, alt: it.alt, w, h });
+
+    row.push({
+      key: it.public_id || it.src || i,
+      public_id: it.public_id,
+      type: it.type,
+      alt: it.alt,
+      w,
+      h,
+    });
     arSum += ar;
 
-    const containerWidth = typeof window !== "undefined" ? Math.min(1400, document.body.clientWidth - 64) : 1200;
-    const estimatedW = arSum * targetRowHeight + gutter * (row.length - 1);
-    if (estimatedW > containerWidth && row.length > 1) {
-      flushRow();
+    const estimatedRowWidth = arSum * targetRowHeight + gutter * (row.length - 1);
+    if (estimatedRowWidth > W && row.length > 1) {
+      flushRow(false);
     }
   });
 
   flushRow(true);
 
   return { tiles, containerHeight: Math.max(0, y - gutter) };
+}
+
+export default function JustifiedGallery({
+  items = [],
+  onItemClick,
+  targetRowHeight = 320,
+  gutter = 16,
+  heroEvery = 0,     // kept for API compatibility (unused)
+  heroHeight = 520,  // kept for API compatibility (unused)
+  className = "",
+  cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME,
+}) {
+  const containerRef = useRef(null);
+  const [width, setWidth] = useState(0);
+
+  // Measure actual gallery width
+  useLayoutEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      setWidth(Math.floor(entry.contentRect.width));
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const layout = useMemo(
+    () => computeLayout(items, width, targetRowHeight, gutter),
+    [items, width, targetRowHeight, gutter]
+  );
+
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.style.height = `${layout.containerHeight}px`;
+    }
+  }, [layout.containerHeight]);
+
+  return (
+    <div ref={containerRef} className={`relative ${className}`} style={{ height: layout.containerHeight }}>
+      {layout.tiles.map((t, i) => {
+        const src =
+          t.public_id && cloudName
+            ? cldUrl({ cloudName, public_id: t.public_id, type: items[i]?.type, width: t.width, height: t.height })
+            : items[i]?.src;
+
+        return (
+          <button
+            key={t.key}
+            type="button"
+            className="absolute block overflow-hidden rounded-xl bg-neutral-100 focus:outline-none"
+            style={{ left: t.left, top: t.top, width: t.width, height: t.height }}
+            onClick={() => onItemClick && onItemClick(t.index ?? i)}
+            aria-label="Open image"
+          >
+            <img
+              src={src}
+              alt={items[i]?.alt || ""}
+              className="h-full w-full object-cover"
+              loading="lazy"
+              decoding="async"
+            />
+          </button>
+        );
+      })}
+    </div>
+  );
 }

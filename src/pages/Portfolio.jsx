@@ -14,7 +14,9 @@ function useHashFlag(flag = '#portfolio') {
   }, [flag]);
   return [open, setOpen];
 }
+
 function clearHash() {
+  if (typeof window === 'undefined') return;
   const url = window.location.pathname + window.location.search;
   window.history.replaceState(null, '', url);
 }
@@ -35,8 +37,8 @@ export default function Portfolio() {
   const { items, loading, error, hasMore, loadMore } = useCloudinaryAssets({
     folder: 'Frame 15 Photos',
     types: 'image',
-    includeSubfolders: false,
-    pageSize: 40,
+    includeSubfolders: true, // include nested folders
+    pageSize: 48,
   });
 
   // Keyboard controls
@@ -48,8 +50,8 @@ export default function Portfolio() {
         else { clearHash(); setOpen(false); }
       }
       if (lightbox !== null && items.length) {
-        if (e.key === 'ArrowRight') setLightbox((i) => Math.min(i + 1, items.length - 1));
-        if (e.key === 'ArrowLeft')  setLightbox((i) => Math.max(i - 1, 0));
+        if (e.key === 'ArrowRight') setLightbox((i) => Math.min((i ?? 0) + 1, items.length - 1));
+        if (e.key === 'ArrowLeft')  setLightbox((i) => Math.max((i ?? 0) - 1, 0));
       }
     };
     window.addEventListener('keydown', onKey);
@@ -61,12 +63,14 @@ export default function Portfolio() {
     else { clearHash(); setOpen(false); }
   }, [lightbox, setOpen]);
 
-  // Infinite scroll sentinel
+  // Infinite scroll: observe the actual scroll container
+  const scrollRef = useRef(null);
   const sentinelRef = useRef(null);
   useEffect(() => {
     if (!open) return;
     const el = sentinelRef.current;
-    if (!el) return;
+    const root = scrollRef.current;
+    if (!el || !root) return;
 
     const io = new IntersectionObserver(
       (entries) => {
@@ -75,7 +79,7 @@ export default function Portfolio() {
           loadMore();
         }
       },
-      { root: null, rootMargin: '800px 0px 800px 0px', threshold: 0 }
+      { root, rootMargin: '1000px 0px 1000px 0px', threshold: 0 }
     );
 
     io.observe(el);
@@ -92,6 +96,7 @@ export default function Portfolio() {
           onClick={close}
         >
           <motion.div
+            ref={scrollRef}
             className="absolute inset-0 bg-white text-black overflow-y-auto"
             initial={{ scale: 0.995, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.995, opacity: 0 }}
             onClick={(e) => e.stopPropagation()}
@@ -121,13 +126,13 @@ export default function Portfolio() {
                 </div>
               )}
 
-              {/* Justified, no hero rows */}
+              {/* Justified gallery */}
               <JustifiedGallery
                 items={items}
                 onItemClick={(i) => setLightbox(i)}
                 targetRowHeight={320}
                 gutter={16}
-                heroEvery={0}      // <- no full-width rows
+                heroEvery={0}
                 heroHeight={520}
                 className="relative"
               />
@@ -163,7 +168,7 @@ export default function Portfolio() {
                 </button>
 
                 <button
-                  onClick={(e) => { e.stopPropagation(); setLightbox((i) => Math.max(0, i - 1)); }}
+                  onClick={(e) => { e.stopPropagation(); setLightbox((i) => Math.max(0, (i ?? 0) - 1)); }}
                   disabled={lightbox === 0}
                   className="hidden sm:flex absolute left-3 md:left-6 top-1/2 -translate-y-1/2 z-40 rounded-full p-2 bg-white/10 hover:bg-white/20 disabled:opacity-40"
                   aria-label="Previous"
@@ -171,7 +176,7 @@ export default function Portfolio() {
                   <FiChevronLeft className="h-7 w-7" />
                 </button>
                 <button
-                  onClick={(e) => { e.stopPropagation(); setLightbox((i) => Math.min(items.length - 1, i + 1)); }}
+                  onClick={(e) => { e.stopPropagation(); setLightbox((i) => Math.min(items.length - 1, (i ?? 0) + 1)); }}
                   disabled={lightbox === items.length - 1}
                   className="hidden sm:flex absolute right-3 md:right-6 top-1/2 -translate-y-1/2 z-40 rounded-full p-2 bg-white/10 hover:bg-white/20 disabled:opacity-40"
                   aria-label="Next"
@@ -196,12 +201,12 @@ export default function Portfolio() {
                 {/* Large click areas */}
                 <button
                   className="absolute left-0 top-16 md:top-20 bottom-0 w-1/3 md:w-1/4 z-20"
-                  onClick={(e) => { e.stopPropagation(); setLightbox((i) => Math.max(0, i - 1)); }}
+                  onClick={(e) => { e.stopPropagation(); setLightbox((i) => Math.max(0, (i ?? 0) - 1)); }}
                   aria-label="Previous"
                 />
                 <button
                   className="absolute right-0 top-16 md:top-20 bottom-0 w-1/3 md:w-1/4 z-20"
-                  onClick={(e) => { e.stopPropagation(); setLightbox((i) => Math.min(items.length - 1, i + 1)); }}
+                  onClick={(e) => { e.stopPropagation(); setLightbox((i) => Math.min(items.length - 1, (i ?? 0) + 1)); }}
                   aria-label="Next"
                 />
               </motion.div>
