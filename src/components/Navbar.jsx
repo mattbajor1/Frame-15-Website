@@ -49,7 +49,7 @@ export default function Navbar() {
           {/* LEFT: logo */}
           <a href="#home" className="justify-self-start flex items-center" title="Go to home">
             <motion.img
-              src="/images/logo.png"
+              src="/images/Logo.png"
               alt="Frame 15"
               className="h-12 md:h-14 w-auto"
               style={{ opacity: logoOpacity }}
@@ -67,7 +67,7 @@ export default function Navbar() {
           </a>
 
           {/* RIGHT: links + portfolio (now use the gutter space) */}
-          <div className="hidden md:flex justify-self-end items-center gap-7 lg:gap-9">
+          <div className="hidden xl:flex justify-self-end items-center gap-7 lg:gap-9">
             {links.map(({ label, href }) => (
               <a key={label} href={href} className={linkBase}>
                 {label}
@@ -87,7 +87,7 @@ export default function Navbar() {
 
           {/* Mobile menu toggle */}
           <button
-            className="md:hidden text-white justify-self-end"
+            className="xl:hidden text-white justify-self-end"
             onClick={() => setOpen((v) => !v)}
             aria-label="Toggle mobile menu"
             aria-expanded={open}
@@ -101,7 +101,7 @@ export default function Navbar() {
       {/* Mobile drawer (still full-bleed padding) */}
       <div
         id="mobile-menu"
-        className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
+        className={`xl:hidden overflow-hidden transition-all duration-300 ease-in-out ${
           open ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
         } bg-black border-t border-white/10`}
       >
