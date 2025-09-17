@@ -1,121 +1,103 @@
 // netlify/functions/cloudinary-list.mjs
-import { v2 as cloudinary } from "cloudinary";
+import cloudinary from "cloudinary";
 
-// Parse CLOUDINARY_URL if present (cloudinary://KEY:SECRET@CLOUD_NAME)
-function parseCloudinaryUrl(url) {
-  try {
-    const u = new URL(url);
-    return { cloud_name: u.hostname, api_key: u.username, api_secret: u.password };
-  } catch {
-    return {};
-  }
-}
-
-const parsed = parseCloudinaryUrl(process.env.CLOUDINARY_URL || "");
-
-cloudinary.config({
-  cloud_name:
-    process.env.CLOUDINARY_CLOUD_NAME ||
-    process.env.VITE_CLOUDINARY_CLOUD_NAME || // ok to be public; not a secret
-    parsed.cloud_name,
-  api_key: process.env.CLOUDINARY_API_KEY || parsed.api_key,
-  api_secret: process.env.CLOUDINARY_API_SECRET || parsed.api_secret,
+cloudinary.v2.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key:    process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
   secure: true,
 });
 
-export async function handler(event) {
+const ok = (body) => ({ statusCode: 200, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+const err = (status, message) => ({ statusCode: status, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ error: message }) });
+
+export const handler = async (event) => {
   try {
-    if (!cloudinary.config().cloud_name) {
-      // No secret values logged
-      console.error("Cloudinary config missing: no cloud_name.");
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: "Cloudinary is not configured (missing env vars)." }),
-      };
-    }
+    const qs = event.queryStringParameters || {};
+    const folder = (qs.folder || "").trim();
+    if (!folder) return err(400, "Missing ?folder");
 
-    const p = event.queryStringParameters || {};
-    const folder = p.folder || "Frame 15 Photos";
-    const includeSub = (p.include_subfolders || "false") === "true";
-    const max = parseInt(p.max_results || "40", 10);
-    const types = (p.types || "image").toLowerCase(); // 'image' | 'video' | 'all'
-    const sort = p.sort || "created_at";              // 'created_at' | 'public_id'
-    const order = p.order || "desc";                  // 'asc' | 'desc'
-    const next = p.next_cursor;
+    const includeSubfolders = String(qs.includeSubfolders ?? "true") === "true";
+    const pageSize = Math.min(parseInt(qs.pageSize || "48", 10) || 48, 500);
+    const nextCursor = qs.nextCursor || null;
+    const types = (qs.types || "image").trim(); // "image" | "video" | "image,video"
 
-    // ✅ Correct Cloudinary Search syntax (no quotes around resource_type)
-    let expr = `folder="${folder}${includeSub ? "/*" : ""}"`;
-    if (types === "image") expr += " AND resource_type:image";
-    if (types === "video") expr += " AND resource_type:video";
-    // if 'all' → no resource_type filter (returns any)
+    // If only one type, use Admin API resources+prefix (fast, simple, includes subfolders by prefix).
+    const typeList = types.split(",").map((t) => t.trim()).filter(Boolean);
 
-    let search = cloudinary.search
-      .expression(expr)
-      .with_field("context")
-      .with_field("tags")
-      .sort_by(sort, order)
-      .max_results(max);
+    if (typeList.length === 1) {
+      const resource_type = typeList[0]; // "image" or "video"
+      // prefix that includes subfolders
+      const prefix = includeSubfolders ? `${folder}/` : `${folder}/`;
+      // NOTE: Admin API with prefix always includes subfolders; to emulate "no subfolders",
+      // we filter client-side below when includeSubfolders=false.
 
-    if (next) search = search.next_cursor(next);
-
-    const result = await search.execute();
-
-    const widths = [480, 768, 1200, 1600, 2000];
-    const items = result.resources.map((r) => {
-      const isVideo = r.resource_type === "video";
-
-      const src = cloudinary.url(r.public_id, {
-        resource_type: isVideo ? "video" : "image",
-        transformation: [
-          { width: 1200, crop: "fill", gravity: "auto" },
-          { fetch_format: "auto", quality: "auto" },
-        ],
+      const res = await cloudinary.v2.api.resources({
+        type: "upload",
+        resource_type,
+        prefix,
+        max_results: pageSize,
+        next_cursor: nextCursor || undefined,
       });
 
-      const srcSet = !isVideo
-        ? widths
-            .map(
-              (w) =>
-                `${cloudinary.url(r.public_id, {
-                  resource_type: "image",
-                  transformation: [
-                    { width: w, crop: "fill", gravity: "auto" },
-                    { fetch_format: "auto", quality: "auto" },
-                  ],
-                })} ${w}w`
-            )
-            .join(", ")
-        : null;
-
-      const alt = r.context?.custom?.alt || r.public_id.split("/").pop().replace(/[-_]/g, " ");
-
-      return {
-        id: r.asset_id,
+      let items = (res.resources || []).map((r) => ({
         public_id: r.public_id,
-        type: r.resource_type, // 'image' | 'video'
-        src,
-        srcSet,
-        alt,
-        created_at: r.created_at,
+        type: r.resource_type,
         width: r.width,
         height: r.height,
-        videoUrl: isVideo
-          ? cloudinary.url(r.public_id, {
-              resource_type: "video",
-              transformation: [{ width: 1600, crop: "limit" }, { fetch_format: "auto", quality: "auto" }],
-            })
-          : null,
-      };
-    });
+        created_at: r.created_at,
+        format: r.format,
+        secure_url: r.secure_url,
+        folder: r.folder, // e.g., "Frame 15 Photos/sub"
+      }));
 
-    return {
-      statusCode: 200,
-      headers: { "cache-control": "public, s-maxage=300, stale-while-revalidate=86400" },
-      body: JSON.stringify({ items, next_cursor: result.next_cursor || null, count: items.length }),
-    };
-  } catch (err) {
-    const msg = err?.error?.message || err?.message || "unknown";
-    console.error("Cloudinary search error:", msg);
-    return { statusCode: 500, body: JSON.stringify({ error: "Cloudinary search failed." }) };
+      if (!includeSubfolders) {
+        // Keep only exact folder (no deeper slashes after the folder name)
+        const base = folder.replace(/\/+$/, "");
+        items = items.filter((it) => it.folder === base);
+      }
+
+      // Sort newest first to match typical expectations
+      items.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+      return ok({
+        items,
+        nextCursor: res.next_cursor || null,
+        hasMore: Boolean(res.next_cursor),
+      });
+    }
+
+    // If you requested multiple resource types, use the Search API.
+    const exprTypes = typeList.map((t) => `resource_type:${t}`).join(" OR ");
+    const folderExpr = includeSubfolders ? `folder="${folder}/*"` : `folder="${folder}"`;
+    const expression = `(${exprTypes}) AND ${folderExpr}`;
+
+    const res = await cloudinary.v2.search
+      .expression(expression)
+      .sort_by("created_at", "desc")
+      .with_field("context")
+      .max_results(pageSize)
+      .next_cursor(nextCursor || undefined)
+      .execute();
+
+    const items = (res.resources || []).map((r) => ({
+      public_id: r.public_id,
+      type: r.resource_type,
+      width: r.width,
+      height: r.height,
+      created_at: r.created_at,
+      format: r.format,
+      secure_url: r.secure_url,
+      folder: r.folder,
+    }));
+
+    return ok({
+      items,
+      nextCursor: res.next_cursor || null,
+      hasMore: Boolean(res.next_cursor),
+    });
+  } catch (e) {
+    console.error(e);
+    return err(500, e.message || "Cloudinary list failed");
   }
-}
+};
