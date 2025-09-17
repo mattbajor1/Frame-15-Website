@@ -1,3 +1,4 @@
+// src/components/Navbar.jsx
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 
@@ -5,7 +6,7 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
-  // slow fade behavior
+  // Gentle scroll behavior
   const { scrollY } = useScroll();
   const brandOpacity = useTransform(scrollY, [0, 200, 600], [1, 1, 0]);
   const brandY       = useTransform(scrollY, [0, 600], [0, -10]);
@@ -17,16 +18,16 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  // Links
   const links = [
-    { label: 'Home', href: '#home' },
+    { label: 'Home',         href: '#home' },
     { label: 'Our Services', href: '#projects' },
-    { label: 'About', href: '#about' },
-    { label: 'Contact', href: '#contact' },
+    { label: 'About',        href: '#about' },
+    { label: 'Contact',      href: '#contact' },
   ];
   const allDesktopLinks = [...links, { label: 'Portfolio', href: '#portfolio', portfolio: true }];
-  const portfolioIndex = allDesktopLinks.length - 1;
 
-  // Mobile/base link style (keeps underline)
+  // Mobile/tablet links keep their own underline
   const linkBase =
     '!m-0 !border-0 !rounded-none !bg-transparent hover:!bg-transparent ' +
     'relative z-[2] inline-flex items-center h-10 px-3 ' +
@@ -36,23 +37,22 @@ export default function Navbar() {
     'after:scale-x-0 hover:after:scale-x-100 after:origin-left after:transition-transform after:duration-300 ' +
     'hover:text-yellow-500 transition-colors';
 
-  // Desktop link style (NO underline)
+  // Desktop links — NO underline here (only the shared moving line)
   const linkDesktop =
     '!m-0 !border-0 !rounded-none !bg-transparent hover:!bg-transparent ' +
     'relative z-[2] inline-flex items-center h-10 px-3 ' +
     'font-display uppercase tracking-wide whitespace-nowrap leading-none ' +
-    'text-base lg:text-lg transition-colors';
+    'text-base lg:text-lg text-white hover:text-yellow-500 transition-colors';
 
-  // --- Desktop marker (full yellow box with tight glow) ---
+  // --- Desktop moving underline marker ---
   const desktopWrapRef = useRef(null);
-  const linkRefs = useRef([]); // filled in render
+  const linkRefs = useRef([]);
   const [marker, setMarker] = useState({ left: 0, width: 0, visible: false });
 
-  // Active tab from hash (fallback to #home)
+  // Active tab from hash
   const [activeIndex, setActiveIndex] = useState(0);
   useEffect(() => {
     const setByHash = () => {
-      if (typeof window === 'undefined') return;
       const h = window.location.hash || '#home';
       const i = allDesktopLinks.findIndex(l => l.href === h);
       setActiveIndex(i >= 0 ? i : 0);
@@ -60,7 +60,6 @@ export default function Navbar() {
     setByHash();
     window.addEventListener('hashchange', setByHash);
     return () => window.removeEventListener('hashchange', setByHash);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const [hoveredIndex, setHoveredIndex] = useState(null);
@@ -80,10 +79,9 @@ export default function Navbar() {
     const onResize = () => updateMarker(hoveredIndex != null ? hoveredIndex : activeIndex);
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [hoveredIndex, activeIndex]);
 
-  // --- Animated hamburger (3 bars morph to X) ---
   const spring = { type: 'spring', stiffness: 900, damping: 22, mass: 0.7 };
 
   return (
@@ -91,7 +89,6 @@ export default function Navbar() {
       className={`fixed inset-x-0 top-0 z-50 ${scrolled ? 'bg-black/80 backdrop-blur border-b border-white/10' : 'bg-black'}`}
       aria-label="Main navigation"
     >
-      {/* FULL BLEED */}
       <div className="px-6 lg:px-10 py-6">
         <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center">
           {/* LEFT: logo */}
@@ -114,36 +111,40 @@ export default function Navbar() {
             </motion.span>
           </a>
 
-          {/* RIGHT: desktop tabs (≥ 2xl) with bright full-box marker */}
+          {/* RIGHT: desktop tabs (≥ 2xl) with ONE moving line */}
           <div
-            className="hidden 2xl:flex justify-self-end items-center gap-7 lg:gap-9 relative"
+            className="hidden 2xl:flex justify-self-end items-center gap-7 lg:gap-9 relative pb-2"
             ref={desktopWrapRef}
             onMouseLeave={() => setHoveredIndex(null)}
           >
-            {/* Marker: full yellow box with tight glow */}
+            {/* Moving underline marker (calm, no bounce) */}
             <motion.div
-              className="pointer-events-none absolute top-1/2 -translate-y-1/2 rounded-lg"
-              style={{ height: 40, borderRadius: 10, zIndex: 1 }}
+              className="pointer-events-none absolute bg-yellow-500"
+              style={{ height: 3, bottom: 10, zIndex: 1 }}
               animate={{
                 left: marker.left,
                 width: marker.width,
                 opacity: marker.visible ? 1 : 0,
-                backgroundColor: '#eab308', // Tailwind yellow-500
-                boxShadow:
-                  '0 0 8px rgba(234,179,8,0.9), 0 0 16px rgba(234,179,8,0.55), 0 0 22px rgba(234,179,8,0.35)',
               }}
-              transition={{ type: 'spring', stiffness: 1000, damping: 24, mass: 0.7 }}
+              transition={{
+                left:  { type: 'spring', stiffness: 220, damping: 48, mass: 1.2 },
+                width: { type: 'tween', duration: 0.28, ease: [0.22, 1, 0.36, 1] },
+                opacity:{ duration: 0.12 }
+              }}
             />
 
             {allDesktopLinks.map(({ label, href, portfolio }, i) => (
               <a
                 key={label}
                 href={href}
-                className={`${linkDesktop} ${i === (hoveredIndex ?? activeIndex) ? 'text-black' : 'text-white'} ${portfolio ? '!px-4 !border !border-white/30 !rounded-full' : ''}`}
+                className={`${linkDesktop} ${portfolio ? '!px-4 !border !border-white/30 !rounded-full' : ''}`}
                 ref={(el) => (linkRefs.current[i] = el)}
                 onMouseEnter={() => setHoveredIndex(i)}
                 onClick={(e) => {
-                  if (href === '#portfolio') {
+                  if (href === '#home') {
+                    e.preventDefault();
+                    window.scrollTo({ top: 0, behavior: 'smooth'})
+                  } else if (href === '#portfolio') {
                     e.preventDefault();
                     if (window.location.hash !== '#portfolio') window.location.hash = 'portfolio';
                   }
@@ -213,7 +214,7 @@ export default function Navbar() {
             className="inline-flex items-center h-10 px-4 rounded-full border border-white/30 text-white text-xl hover:bg-white hover:text-black transition"
             initial={false}
             animate={open ? { y: 0, opacity: 1, scale: 1 } : { y: -8, opacity: 0.2, scale: 0.98 }}
-            transition={{ type: 'spring', stiffness: 600, damping: 28, mass: 0.7, delay: open ? links.length * 0.03 : 0 }}
+            transition={{ type: 'spring', stiffness: 600, damping: 28, mass: 0.7, delay: links.length * 0.03 }}
           >
             Portfolio
           </motion.a>
