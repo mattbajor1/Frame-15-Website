@@ -8,96 +8,81 @@ cloudinary.v2.config({
   secure: true,
 });
 
-const ok = (body) => ({ statusCode: 200, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-const err = (status, message) => ({ statusCode: status, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ error: message }) });
+const json = (code, body) => ({
+  statusCode: code,
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(body),
+});
 
 export const handler = async (event) => {
   try {
     const qs = event.queryStringParameters || {};
     const folder = (qs.folder || "").trim();
-    if (!folder) return err(400, "Missing ?folder");
-
     const includeSubfolders = String(qs.includeSubfolders ?? "true") === "true";
     const pageSize = Math.min(parseInt(qs.pageSize || "48", 10) || 48, 500);
     const nextCursor = qs.nextCursor || null;
-    const types = (qs.types || "image").trim(); // "image" | "video" | "image,video"
+    const resourceTypes = (qs.resourceTypes || qs.types || "image") // allow old param name "types"
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean); // e.g. ["image"] or ["image","video"]
 
-    // If only one type, use Admin API resources+prefix (fast, simple, includes subfolders by prefix).
-    const typeList = types.split(",").map((t) => t.trim()).filter(Boolean);
+    // Quick sanity checks to avoid opaque 500s
+    if (!process.env.CLOUDINARY_CLOUD_NAME) {
+      return json(400, { error: "Missing env: CLOUDINARY_CLOUD_NAME" });
+    }
+    if (!process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+      return json(400, { error: "Missing env: CLOUDINARY_API_KEY and/or CLOUDINARY_API_SECRET" });
+    }
+    if (!folder) return json(400, { error: "Missing ?folder" });
 
-    if (typeList.length === 1) {
-      const resource_type = typeList[0]; // "image" or "video"
-      // prefix that includes subfolders
-      const prefix = includeSubfolders ? `${folder}/` : `${folder}/`;
-      // NOTE: Admin API with prefix always includes subfolders; to emulate "no subfolders",
-      // we filter client-side below when includeSubfolders=false.
-
+    // Helper: list one resource_type via Admin API with prefix (includes subfolders)
+    const listOne = async (resource_type) => {
       const res = await cloudinary.v2.api.resources({
-        type: "upload",
-        resource_type,
-        prefix,
+        type: "upload",             // delivery type
+        resource_type,              // "image" or "video"
+        prefix: `${folder}/`,       // includes subfolders
         max_results: pageSize,
         next_cursor: nextCursor || undefined,
       });
-
       let items = (res.resources || []).map((r) => ({
         public_id: r.public_id,
-        type: r.resource_type,
+        type: r.resource_type,      // "image" | "video"
         width: r.width,
         height: r.height,
         created_at: r.created_at,
         format: r.format,
         secure_url: r.secure_url,
-        folder: r.folder, // e.g., "Frame 15 Photos/sub"
+        folder: r.folder,           // "Folder/Sub"
       }));
-
       if (!includeSubfolders) {
-        // Keep only exact folder (no deeper slashes after the folder name)
         const base = folder.replace(/\/+$/, "");
         items = items.filter((it) => it.folder === base);
       }
+      return { items, nextCursor: res.next_cursor || null };
+    };
 
-      // Sort newest first to match typical expectations
-      items.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-      return ok({
-        items,
-        nextCursor: res.next_cursor || null,
-        hasMore: Boolean(res.next_cursor),
-      });
+    // Combine results if multiple resource types requested (rare for your case)
+    const out = { items: [], nextCursor: null, hasMore: false };
+    for (const rt of resourceTypes) {
+      const r = await listOne(rt);
+      out.items.push(...r.items);
+      // If any type has a next cursor, expose it.
+      out.nextCursor = r.nextCursor || out.nextCursor;
+      out.hasMore = out.hasMore || Boolean(r.nextCursor);
     }
 
-    // If you requested multiple resource types, use the Search API.
-    const exprTypes = typeList.map((t) => `resource_type:${t}`).join(" OR ");
-    const folderExpr = includeSubfolders ? `folder="${folder}/*"` : `folder="${folder}"`;
-    const expression = `(${exprTypes}) AND ${folderExpr}`;
+    // Sort newest first
+    out.items.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
-    const res = await cloudinary.v2.search
-      .expression(expression)
-      .sort_by("created_at", "desc")
-      .with_field("context")
-      .max_results(pageSize)
-      .next_cursor(nextCursor || undefined)
-      .execute();
-
-    const items = (res.resources || []).map((r) => ({
-      public_id: r.public_id,
-      type: r.resource_type,
-      width: r.width,
-      height: r.height,
-      created_at: r.created_at,
-      format: r.format,
-      secure_url: r.secure_url,
-      folder: r.folder,
-    }));
-
-    return ok({
-      items,
-      nextCursor: res.next_cursor || null,
-      hasMore: Boolean(res.next_cursor),
-    });
+    return json(200, out);
   } catch (e) {
-    console.error(e);
-    return err(500, e.message || "Cloudinary list failed");
+    console.error("[cloudinary-list] failure:", e?.response?.body || e);
+    const message =
+      (e?.response?.body && typeof e.response.body === "object" && e.response.body.error?.message) ||
+      e?.message ||
+      "Cloudinary list failed";
+    const http = e?.http_code || e?.response?.statusCode || 500;
+    // Return the detailed message so the client can display it
+    return json(http, { error: message });
   }
 };
