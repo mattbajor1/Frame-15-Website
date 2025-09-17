@@ -1,71 +1,94 @@
-// src/hooks/useCloudinaryAssets.js
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
+/**
+ * Loads Cloudinary search results page-by-page from your Netlify function.
+ * - Guards against React StrictMode double-mount
+ * - Prevents concurrent requests & reusing the same cursor
+ * - De-dupes by public_id+type across pages
+ */
 export default function useCloudinaryAssets({
-  folder,
-  pageSize = 48,
-  includeSubfolders = true,
-  types = "image", // or "image,video"
+  folder = "Frame 15 Photos",
+  types = "image",            // 'image' | 'video' | 'all'
+  includeSubfolders = false,
+  pageSize = 40,
 } = {}) {
   const [items, setItems] = useState([]);
-  const [next, setNext] = useState(null);
+  const [nextCursor, setNextCursor] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [hasMore, setHasMore] = useState(true);
 
-  // reset when inputs change
-  useEffect(() => {
-    setItems([]);
-    setNext(null);
-    setHasMore(true);
-    setError(null);
-  }, [folder, pageSize, includeSubfolders, types]);
+  // --- StrictMode / de-dupe guards ---
+  const initRef = useRef(false);             // avoid double initial fetch in dev
+  const seenRef = useRef(new Set());         // public_id:type -> true
+  const inflightRef = useRef(false);         // prevent concurrent fetches
+  const lastCursorRef = useRef(undefined);   // prevent fetching same cursor twice
 
-  const inflight = useRef(false);
+  function makeKey(it) {
+    // public_id is globally unique per resource type; add type for safety
+    return `${it.public_id || it.id || it.src}|${it.type || "image"}`;
+  }
 
-  const loadMore = useCallback(async () => {
-    if (inflight.current || loading || !hasMore) return;
-    inflight.current = true;
+  async function fetchPage(cursor) {
+    if (inflightRef.current) return;
+    if (cursor === lastCursorRef.current) return; // same page: ignore
+
+    inflightRef.current = true;
     setLoading(true);
+    setError(null);
     try {
       const qs = new URLSearchParams({
         folder,
-        pageSize: String(pageSize),
-        includeSubfolders: String(includeSubfolders),
         types,
+        include_subfolders: includeSubfolders ? "true" : "false",
+        max_results: String(pageSize),
       });
-      if (next) qs.set("nextCursor", next);
+      if (cursor) qs.set("next_cursor", cursor);
 
       const res = await fetch(`/.netlify/functions/cloudinary-list?${qs.toString()}`);
-      if (!res.ok) throw new Error(`Cloudinary list failed (${res.status})`);
+      if (!res.ok) throw new Error(`Cloudinary list failed: ${res.status}`);
+
       const data = await res.json();
+      const fresh = (data.items || []).filter((it) => {
+        const k = makeKey(it);
+        if (seenRef.current.has(k)) return false;
+        seenRef.current.add(k);
+        return true;
+      });
 
-      const newItems = (data.items || []).map((r) => ({
-        public_id: r.public_id,
-        type: r.type,
-        width: r.width,
-        height: r.height,
-        src: r.secure_url, // fallback src if you want to use direct url
-        alt: "",
-      }));
-
-      setItems((prev) => [...prev, ...newItems]);
-      setNext(data.nextCursor || null);
-      setHasMore(Boolean(data.nextCursor));
-      setError(null);
+      setItems((prev) => (cursor ? [...prev, ...fresh] : fresh));
+      lastCursorRef.current = data.next_cursor || null;
+      setNextCursor(data.next_cursor || null);
     } catch (e) {
-      setError(e.message || String(e));
-      setHasMore(false);
+      setError(e.message || "Unknown error");
     } finally {
+      inflightRef.current = false;
       setLoading(false);
-      inflight.current = false;
     }
-  }, [folder, pageSize, includeSubfolders, types, next, loading, hasMore]);
+  }
 
-  // initial load
+  // Initial load + reload on key params change
   useEffect(() => {
-    loadMore();
-  }, [loadMore]);
+    // reset state
+    setItems([]);
+    setNextCursor(null);
+    setError(null);
+    seenRef.current.clear();
+    lastCursorRef.current = undefined;
 
-  return { items, loading, error, hasMore, loadMore };
+    // StrictMode: ensure we only kick one initial fetch
+    if (initRef.current) {
+      initRef.current = false; // reset for subsequent prop changes
+    }
+    initRef.current = true;
+    fetchPage(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [folder, types, includeSubfolders, pageSize]);
+
+  return {
+    items,
+    loading,
+    error,
+    hasMore: Boolean(nextCursor),
+    loadMore: () => fetchPage(nextCursor),
+  };
 }

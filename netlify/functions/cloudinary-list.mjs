@@ -1,88 +1,121 @@
 // netlify/functions/cloudinary-list.mjs
-import cloudinary from "cloudinary";
+import { v2 as cloudinary } from "cloudinary";
 
-cloudinary.v2.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key:    process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+// Parse CLOUDINARY_URL if present (cloudinary://KEY:SECRET@CLOUD_NAME)
+function parseCloudinaryUrl(url) {
+  try {
+    const u = new URL(url);
+    return { cloud_name: u.hostname, api_key: u.username, api_secret: u.password };
+  } catch {
+    return {};
+  }
+}
+
+const parsed = parseCloudinaryUrl(process.env.CLOUDINARY_URL || "");
+
+cloudinary.config({
+  cloud_name:
+    process.env.CLOUDINARY_CLOUD_NAME ||
+    process.env.VITE_CLOUDINARY_CLOUD_NAME || // ok to be public; not a secret
+    parsed.cloud_name,
+  api_key: process.env.CLOUDINARY_API_KEY || parsed.api_key,
+  api_secret: process.env.CLOUDINARY_API_SECRET || parsed.api_secret,
   secure: true,
 });
 
-const json = (code, body) => ({
-  statusCode: code,
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(body),
-});
-
-export const handler = async (event) => {
+export async function handler(event) {
   try {
-    const qs = event.queryStringParameters || {};
-    const folder = (qs.folder || "").trim();
-    const includeSubfolders = String(qs.includeSubfolders ?? "true") === "true";
-    const pageSize = Math.min(parseInt(qs.pageSize || "48", 10) || 48, 500);
-    const nextCursor = qs.nextCursor || null;
-    const resourceTypes = (qs.resourceTypes || qs.types || "image") // allow old param name "types"
-      .split(",")
-      .map((t) => t.trim())
-      .filter(Boolean); // e.g. ["image"] or ["image","video"]
-
-    // Quick sanity checks to avoid opaque 500s
-    if (!process.env.CLOUDINARY_CLOUD_NAME) {
-      return json(400, { error: "Missing env: CLOUDINARY_CLOUD_NAME" });
+    if (!cloudinary.config().cloud_name) {
+      // No secret values logged
+      console.error("Cloudinary config missing: no cloud_name.");
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: "Cloudinary is not configured (missing env vars)." }),
+      };
     }
-    if (!process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
-      return json(400, { error: "Missing env: CLOUDINARY_API_KEY and/or CLOUDINARY_API_SECRET" });
-    }
-    if (!folder) return json(400, { error: "Missing ?folder" });
 
-    // Helper: list one resource_type via Admin API with prefix (includes subfolders)
-    const listOne = async (resource_type) => {
-      const res = await cloudinary.v2.api.resources({
-        type: "upload",             // delivery type
-        resource_type,              // "image" or "video"
-        prefix: `${folder}/`,       // includes subfolders
-        max_results: pageSize,
-        next_cursor: nextCursor || undefined,
+    const p = event.queryStringParameters || {};
+    const folder = p.folder || "Frame 15 Photos";
+    const includeSub = (p.include_subfolders || "false") === "true";
+    const max = parseInt(p.max_results || "40", 10);
+    const types = (p.types || "image").toLowerCase(); // 'image' | 'video' | 'all'
+    const sort = p.sort || "created_at";              // 'created_at' | 'public_id'
+    const order = p.order || "desc";                  // 'asc' | 'desc'
+    const next = p.next_cursor;
+
+    // ✅ Correct Cloudinary Search syntax (no quotes around resource_type)
+    let expr = `folder="${folder}${includeSub ? "/*" : ""}"`;
+    if (types === "image") expr += " AND resource_type:image";
+    if (types === "video") expr += " AND resource_type:video";
+    // if 'all' → no resource_type filter (returns any)
+
+    let search = cloudinary.search
+      .expression(expr)
+      .with_field("context")
+      .with_field("tags")
+      .sort_by(sort, order)
+      .max_results(max);
+
+    if (next) search = search.next_cursor(next);
+
+    const result = await search.execute();
+
+    const widths = [480, 768, 1200, 1600, 2000];
+    const items = result.resources.map((r) => {
+      const isVideo = r.resource_type === "video";
+
+      const src = cloudinary.url(r.public_id, {
+        resource_type: isVideo ? "video" : "image",
+        transformation: [
+          { width: 1200, crop: "fill", gravity: "auto" },
+          { fetch_format: "auto", quality: "auto" },
+        ],
       });
-      let items = (res.resources || []).map((r) => ({
+
+      const srcSet = !isVideo
+        ? widths
+            .map(
+              (w) =>
+                `${cloudinary.url(r.public_id, {
+                  resource_type: "image",
+                  transformation: [
+                    { width: w, crop: "fill", gravity: "auto" },
+                    { fetch_format: "auto", quality: "auto" },
+                  ],
+                })} ${w}w`
+            )
+            .join(", ")
+        : null;
+
+      const alt = r.context?.custom?.alt || r.public_id.split("/").pop().replace(/[-_]/g, " ");
+
+      return {
+        id: r.asset_id,
         public_id: r.public_id,
-        type: r.resource_type,      // "image" | "video"
+        type: r.resource_type, // 'image' | 'video'
+        src,
+        srcSet,
+        alt,
+        created_at: r.created_at,
         width: r.width,
         height: r.height,
-        created_at: r.created_at,
-        format: r.format,
-        secure_url: r.secure_url,
-        folder: r.folder,           // "Folder/Sub"
-      }));
-      if (!includeSubfolders) {
-        const base = folder.replace(/\/+$/, "");
-        items = items.filter((it) => it.folder === base);
-      }
-      return { items, nextCursor: res.next_cursor || null };
+        videoUrl: isVideo
+          ? cloudinary.url(r.public_id, {
+              resource_type: "video",
+              transformation: [{ width: 1600, crop: "limit" }, { fetch_format: "auto", quality: "auto" }],
+            })
+          : null,
+      };
+    });
+
+    return {
+      statusCode: 200,
+      headers: { "cache-control": "public, s-maxage=300, stale-while-revalidate=86400" },
+      body: JSON.stringify({ items, next_cursor: result.next_cursor || null, count: items.length }),
     };
-
-    // Combine results if multiple resource types requested (rare for your case)
-    const out = { items: [], nextCursor: null, hasMore: false };
-    for (const rt of resourceTypes) {
-      const r = await listOne(rt);
-      out.items.push(...r.items);
-      // If any type has a next cursor, expose it.
-      out.nextCursor = r.nextCursor || out.nextCursor;
-      out.hasMore = out.hasMore || Boolean(r.nextCursor);
-    }
-
-    // Sort newest first
-    out.items.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-    return json(200, out);
-  } catch (e) {
-    console.error("[cloudinary-list] failure:", e?.response?.body || e);
-    const message =
-      (e?.response?.body && typeof e.response.body === "object" && e.response.body.error?.message) ||
-      e?.message ||
-      "Cloudinary list failed";
-    const http = e?.http_code || e?.response?.statusCode || 500;
-    // Return the detailed message so the client can display it
-    return json(http, { error: message });
+  } catch (err) {
+    const msg = err?.error?.message || err?.message || "unknown";
+    console.error("Cloudinary search error:", msg);
+    return { statusCode: 500, body: JSON.stringify({ error: "Cloudinary search failed." }) };
   }
-};
+}
