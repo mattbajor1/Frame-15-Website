@@ -117,16 +117,9 @@ export default function Navbar() {
 
           {/* RIGHT: desktop tabs — fluid compaction (lg→2xl), collapse <lg */}
           <div
-            className="hidden lg:flex justify-self-end items-center relative pb-2"
+            className="hidden lg:flex justify-self-end items-center relative pb-2 gap-4 lg:gap-6 xl:gap-8 2xl:gap-9"
             ref={desktopWrapRef}
             onMouseLeave={() => setHoveredIndex(null)}
-            style={{
-              // t=0 at 1024px (lg), t=1 at 1536px (2xl)
-              gap: 'clamp(16px, calc(16px + (36px - 16px) * ((100vw - 1024px) / 512)), 36px)',
-              '--h':  'clamp(32px, calc(32px + (40px - 32px) * ((100vw - 1024px) / 512)), 40px)',
-              '--px': 'clamp(8px, calc(8px + (12px - 8px) * ((100vw - 1024px) / 512)), 12px)',
-              '--fs': 'clamp(0.875rem, calc(0.875rem + (1.125rem - 0.875rem) * ((100vw - 1024px) / 512)), 1.125rem)',
-            }}
           >
             {/* Single moving underline (calm, no bounce) */}
             <motion.div
@@ -148,8 +141,7 @@ export default function Navbar() {
               <a
                 key={label}
                 href={href}
-                className={`${linkDesktop} ${portfolio ? '!rounded-full !border !border-white/30' : ''}`}
-                style={{ height: 'var(--h)', paddingLeft: 'var(--px)', paddingRight: 'var(--px)', fontSize: 'var(--fs)' }}
+                className={`${linkDesktop} h-8 lg:h-9 xl:h-10 px-2 lg:px-2.5 xl:px-3 text-sm lg:text-base xl:text-lg ${portfolio ? 'rounded-full border border-white/30' : ''}`}
                 ref={(el) => (linkRefs.current[i] = el)}
                 onMouseEnter={() => setHoveredIndex(i)}
                 onClick={(e) => {
