@@ -117,16 +117,15 @@ export default function Navbar() {
 
           {/* RIGHT: desktop tabs — fluid compaction (lg→2xl), collapse <lg */}
           <div
-            className="hidden lg:flex justify-self-end items-center relative pb-2 gap-[var(--gap)]"
+            className="hidden lg:flex justify-self-end items-center relative pb-2"
             ref={desktopWrapRef}
             onMouseLeave={() => setHoveredIndex(null)}
             style={{
               // t=0 at 1024px (lg), t=1 at 1536px (2xl)
-              '--t':  'clamp(0, (100vw - 1024px) / 512, 1)',
-              '--gap':'calc(16px + (36px - 16px) * var(--t))',             // 16 → 36
-              '--h':  'calc(32px + (40px - 32px) * var(--t))',             // 32 → 40
-              '--px': 'calc(8px  + (12px - 8px)  * var(--t))',             // 8  → 12
-              '--fs': 'calc(0.875rem + (1.125rem - 0.875rem) * var(--t))', // 14 → 18
+              gap: 'clamp(16px, calc(16px + (36px - 16px) * ((100vw - 1024px) / 512)), 36px)',
+              '--h':  'clamp(32px, calc(32px + (40px - 32px) * ((100vw - 1024px) / 512)), 40px)',
+              '--px': 'clamp(8px, calc(8px + (12px - 8px) * ((100vw - 1024px) / 512)), 12px)',
+              '--fs': 'clamp(0.875rem, calc(0.875rem + (1.125rem - 0.875rem) * ((100vw - 1024px) / 512)), 1.125rem)',
             }}
           >
             {/* Single moving underline (calm, no bounce) */}
