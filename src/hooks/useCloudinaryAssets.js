@@ -30,7 +30,7 @@ export default function useCloudinaryAssets({
 
   async function fetchPage(cursor) {
     if (inflightRef.current) return;
-    if (cursor === lastCursorRef.current) return; // same page: ignore
+    if (cursor === lastCursorRef.current && cursor !== null) return; // same page: ignore
 
     inflightRef.current = true;
     setLoading(true);
@@ -45,7 +45,10 @@ export default function useCloudinaryAssets({
       if (cursor) qs.set("next_cursor", cursor);
 
       const res = await fetch(`/.netlify/functions/cloudinary-list?${qs.toString()}`);
-      if (!res.ok) throw new Error(`Cloudinary list failed: ${res.status}`);
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP ${res.status}: ${res.statusText}`);
+      }
 
       const data = await res.json();
       const fresh = (data.items || []).filter((it) => {
@@ -59,7 +62,8 @@ export default function useCloudinaryAssets({
       lastCursorRef.current = data.next_cursor || null;
       setNextCursor(data.next_cursor || null);
     } catch (e) {
-      setError(e.message || "Unknown error");
+      console.error('Cloudinary fetch error:', e);
+      setError(e.message || "Failed to load media");
     } finally {
       inflightRef.current = false;
       setLoading(false);

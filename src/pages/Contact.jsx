@@ -177,6 +177,8 @@ export default function Contact() {
 
           {status.message && (
             <div
+              role={status.type === 'error' ? 'alert' : 'status'}
+              aria-live="polite"
               className={`mt-3 rounded-xl px-4 py-3 text-sm ${
                 status.type === 'success'
                   ? 'bg-green-50 text-green-700 border border-green-200'

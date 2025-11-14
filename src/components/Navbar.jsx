@@ -27,7 +27,7 @@ export default function Navbar() {
   ];
   const allDesktopLinks = [...links, { label: 'Portfolio', href: '#portfolio', portfolio: true }];
 
-  // Mobile/tablet links keep their own underline
+  // Mobile/tablet links (keep their own underline)
   const linkBase =
     '!m-0 !border-0 !rounded-none !bg-transparent hover:!bg-transparent ' +
     'relative z-[2] inline-flex items-center h-10 px-3 ' +
@@ -37,19 +37,22 @@ export default function Navbar() {
     'after:scale-x-0 hover:after:scale-x-100 after:origin-left after:transition-transform after:duration-300 ' +
     'hover:text-yellow-500 transition-colors';
 
-  // Desktop links — NO underline here (only the shared moving line)
+  // Desktop links — NO per-link underline (we use the shared moving line)
   const linkDesktop =
     '!m-0 !border-0 !rounded-none !bg-transparent hover:!bg-transparent ' +
-    'relative z-[2] inline-flex items-center h-10 px-3 ' +
+    'relative z-[2] inline-flex items-center ' +
     'font-display uppercase tracking-wide whitespace-nowrap leading-none ' +
-    'text-base lg:text-lg text-white hover:text-yellow-500 transition-colors';
+    'text-white hover:text-yellow-500 transition-colors ' +
+    // hard-kill any global underline on desktop
+    'after:content-[""] after:absolute after:left-0 after:-bottom-0.5 after:h-[3px] after:w-full ' +
+    'after:scale-x-0 hover:after:scale-x-0 after:bg-transparent after:transition-none';
 
   // --- Desktop moving underline marker ---
   const desktopWrapRef = useRef(null);
   const linkRefs = useRef([]);
   const [marker, setMarker] = useState({ left: 0, width: 0, visible: false });
 
-  // Active tab from hash
+  // Active tab from hash (fallback to #home)
   const [activeIndex, setActiveIndex] = useState(0);
   useEffect(() => {
     const setByHash = () => {
@@ -60,14 +63,14 @@ export default function Navbar() {
     setByHash();
     window.addEventListener('hashchange', setByHash);
     return () => window.removeEventListener('hashchange', setByHash);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const [hoveredIndex, setHoveredIndex] = useState(null);
 
   const updateMarker = (idx) => {
-    const wrap = desktopWrapRef.current;
     const el = (idx != null) ? linkRefs.current[idx] : null;
-    if (!wrap || !el) {
+    if (!el) {
       setMarker(m => ({ ...m, visible: false, width: 0 }));
       return;
     }
@@ -79,9 +82,10 @@ export default function Navbar() {
     const onResize = () => updateMarker(hoveredIndex != null ? hoveredIndex : activeIndex);
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
-
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hoveredIndex, activeIndex]);
 
+  // Hamburger spring (unchanged)
   const spring = { type: 'spring', stiffness: 900, damping: 22, mass: 0.7 };
 
   return (
@@ -111,16 +115,24 @@ export default function Navbar() {
             </motion.span>
           </a>
 
-          {/* RIGHT: desktop tabs (≥ 2xl) with ONE moving line */}
+          {/* RIGHT: desktop tabs — fluid compaction (lg→2xl), collapse <lg */}
           <div
-            className="hidden 2xl:flex justify-self-end items-center gap-7 lg:gap-9 relative pb-2"
+            className="hidden lg:flex justify-self-end items-center relative pb-2 gap-[var(--gap)]"
             ref={desktopWrapRef}
             onMouseLeave={() => setHoveredIndex(null)}
+            style={{
+              // t=0 at 1024px (lg), t=1 at 1536px (2xl)
+              '--t':  'clamp(0, (100vw - 1024px) / 512, 1)',
+              '--gap':'calc(16px + (36px - 16px) * var(--t))',             // 16 → 36
+              '--h':  'calc(32px + (40px - 32px) * var(--t))',             // 32 → 40
+              '--px': 'calc(8px  + (12px - 8px)  * var(--t))',             // 8  → 12
+              '--fs': 'calc(0.875rem + (1.125rem - 0.875rem) * var(--t))', // 14 → 18
+            }}
           >
-            {/* Moving underline marker (calm, no bounce) */}
+            {/* Single moving underline (calm, no bounce) */}
             <motion.div
               className="pointer-events-none absolute bg-yellow-500"
-              style={{ height: 3, bottom: 10, zIndex: 1 }}
+              style={{ height: 2, bottom: 2, zIndex: 1 }}
               animate={{
                 left: marker.left,
                 width: marker.width,
@@ -137,13 +149,14 @@ export default function Navbar() {
               <a
                 key={label}
                 href={href}
-                className={`${linkDesktop} ${portfolio ? '!px-4 !border !border-white/30 !rounded-full' : ''}`}
+                className={`${linkDesktop} ${portfolio ? '!rounded-full !border !border-white/30' : ''}`}
+                style={{ height: 'var(--h)', paddingLeft: 'var(--px)', paddingRight: 'var(--px)', fontSize: 'var(--fs)' }}
                 ref={(el) => (linkRefs.current[i] = el)}
                 onMouseEnter={() => setHoveredIndex(i)}
                 onClick={(e) => {
                   if (href === '#home') {
                     e.preventDefault();
-                    window.scrollTo({ top: 0, behavior: 'smooth'})
+                    window.scrollTo({ top: 0, behavior: 'smooth' }); // absolute top
                   } else if (href === '#portfolio') {
                     e.preventDefault();
                     if (window.location.hash !== '#portfolio') window.location.hash = 'portfolio';
@@ -156,9 +169,9 @@ export default function Navbar() {
             ))}
           </div>
 
-          {/* Animated Hamburger — visible < 2xl */}
+          {/* Hamburger — visible below lg */}
           <button
-            className="2xl:hidden text-white justify-self-end w-10 h-10 relative"
+            className="lg:hidden text-white justify-self-end w-10 h-10 relative"
             onClick={() => setOpen((v) => !v)}
             aria-label={open ? 'Close menu' : 'Open menu'}
             aria-expanded={open}
@@ -187,10 +200,10 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile drawer (< 2xl) */}
+      {/* Mobile drawer (< lg) */}
       <div
         id="mobile-menu"
-        className={`2xl:hidden overflow-hidden transition-all duration-300 ease-in-out ${
+        className={`lg:hidden overflow-hidden transition-all duration-300 ease-in-out ${
           open ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
         } bg-black border-t border-white/10`}
       >
@@ -199,7 +212,15 @@ export default function Navbar() {
             <motion.a
               key={label}
               href={href}
-              onClick={() => setOpen(false)}
+              onClick={(e) => {
+                if (href === '#home') {
+                  e.preventDefault();
+                  setOpen(false);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                  return;
+                }
+                setOpen(false);
+              }}
               className={`${linkBase} text-xl`}
               initial={false}
               animate={open ? { y: 0, opacity: 1, scale: 1 } : { y: -8, opacity: 0.2, scale: 0.98 }}
