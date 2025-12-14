@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm outdated:*)",
+      "Bash(npm update:*)",
+      "Bash(npm run build:*)",
+      "Bash(test:*)",
+      "Bash(npm run lint:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push)",
+      "Bash(npm run dev:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -2,6 +2,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { FiVolume2, FiVolumeX } from 'react-icons/fi';
 
+const ACTIVE_VOLUME = 0.8;
+const MUTED_VOLUME = 0;
+
 export default function Hero() {
   const sectionRef = useRef(null);
   const iframeRef = useRef(null);
@@ -44,8 +47,8 @@ export default function Hero() {
       try {
         await p.ready();
         if (!cancelled) {
+          await p.setVolume(MUTED_VOLUME);
           await p.setMuted(true);
-          await p.setVolume(0.8); // set a sane volume for when we unmute
           setMuted(true);
           setVideoReady(true);
         }
@@ -72,9 +75,10 @@ export default function Hero() {
 
       if (isMuted) {
         await p.setMuted(false);
-        await p.setVolume(0.8);
+        await p.setVolume(ACTIVE_VOLUME);
         await p.play();
       } else {
+        await p.setVolume(MUTED_VOLUME);
         await p.setMuted(true);
       }
 

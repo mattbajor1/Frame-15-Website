@@ -35,7 +35,7 @@ const team = [
   },
   {
     name: 'Aidan Champeau',
-    role: 'Producer & Lead Editor',
+    role: 'Director & Lead Editor',
     roleWord: 'EDITOR',
     photo: '/images/Frame15_Profiles_Aidan.jpg',
     bio: `Aidan architects the cut. From boards to timelines, he finds the rhythm that turns a moment into momentum. He balances structure with surprise, building sequences that land cleanly and linger. As a producer, Aidan keeps every moving piece aligned, from budget to delivery, while protecting the creative vision at every stage. In the edit, his pacing is deliberate, his transitions purposeful, and his storytelling layered. He knows when to push, when to refine, and when to let a moment breathe.`,
@@ -57,7 +57,7 @@ const team = [
   },
   {
     name: 'Matthew Bajor',
-    role: 'Director of Marketing & Design',
+    role: 'Director of Design',
     roleWord: 'DESIGN',
     photo: '/images/Frame15_Profiles_Matt.jpg',
     bio: `Matthew builds the brand voice out in the world. He shapes identity, campaigns, and collateral so the studio point of view is unmistakable across every touchpoint. With a foundation in visual arts and strategy, he connects concept to execution and keeps the work cohesive and intentional. Matthew approaches design with a storyteller mindset, understanding how each image, color, and word contributes to the larger narrative. His goal is simple, to make Frame 15 impossible to ignore.`,
