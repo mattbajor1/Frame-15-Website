@@ -52,7 +52,7 @@ export default function Hero() {
           setMuted(true);
           setVideoReady(true);
         }
-      } catch {}
+      } catch { /* empty */ }
     })();
 
     return () => {

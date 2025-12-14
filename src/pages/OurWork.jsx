@@ -261,6 +261,36 @@ export default function OurWork() {
                           </motion.div>
                         </div>
 
+                        {/* CTA Buttons */}
+                        {active.id === 'photography' && (
+                          <div className="mt-8 flex justify-center">
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                startClose();
+                                window.location.hash = 'portfolio';
+                              }}
+                              className="px-8 py-3 rounded-full bg-white text-black font-display font-bold uppercase tracking-wide hover:bg-yellow-500 transition-colors shadow-lg hover:shadow-yellow-500/20"
+                            >
+                              View Full Portfolio
+                            </button>
+                          </div>
+                        )}
+
+                        {active.id === 'video' && (
+                          <div className="mt-8 flex justify-center">
+                            <a
+                              href="https://vimeo.com/frame15"
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-2 px-8 py-3 rounded-full bg-white text-black font-display font-bold uppercase tracking-wide hover:bg-yellow-500 transition-colors shadow-lg hover:shadow-yellow-500/20"
+                            >
+                              <FiVideo className="w-5 h-5" />
+                              Visit Our Vimeo
+                            </a>
+                          </div>
+                        )}
+
                         <button
                           onClick={startClose}
                           className="mt-6 md:hidden bg-white text-black px-4 py-2 rounded font-bold w-full"
@@ -292,11 +322,10 @@ export default function OurWork() {
                         key={s.id}
                         onClick={() => !isActive && setExpanded(s.id)}
                         disabled={isActive || closing}
-                        className={`relative rounded-lg overflow-hidden border text-left transform-gpu transition-transform duration-300 ${
-                          isActive
+                        className={`relative rounded-lg overflow-hidden border text-left transform-gpu transition-transform duration-300 ${isActive
                             ? 'border-white/20 opacity-50 cursor-default'
                             : 'border-white/10 hover:scale-[1.02]'
-                        }`}
+                          }`}
                         style={{
                           backgroundImage: bgUrl(s.bgImage),
                           backgroundSize: 'cover',

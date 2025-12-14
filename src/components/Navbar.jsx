@@ -117,7 +117,7 @@ export default function Navbar() {
 
           {/* RIGHT: desktop tabs — fluid compaction (lg→2xl), collapse <lg */}
           <div
-            className="hidden lg:flex justify-self-end items-center relative pb-2 gap-4 lg:gap-6 xl:gap-8 2xl:gap-9"
+            className="hidden xl:flex justify-self-end items-center relative pb-2 gap-4 lg:gap-6 xl:gap-8 2xl:gap-9"
             ref={desktopWrapRef}
             onMouseLeave={() => setHoveredIndex(null)}
           >
@@ -147,6 +147,7 @@ export default function Navbar() {
                 onClick={(e) => {
                   if (href === '#home') {
                     e.preventDefault();
+                    window.history.pushState("", document.title, window.location.pathname + window.location.search);
                     window.scrollTo({ top: 0, behavior: 'smooth' }); // absolute top
                   } else if (href === '#portfolio') {
                     e.preventDefault();
@@ -162,7 +163,7 @@ export default function Navbar() {
 
           {/* Hamburger — visible below lg */}
           <button
-            className="lg:hidden text-white justify-self-end w-10 h-10 relative"
+            className="xl:hidden text-white justify-self-end w-10 h-10 relative"
             onClick={() => setOpen((v) => !v)}
             aria-label={open ? 'Close menu' : 'Open menu'}
             aria-expanded={open}
@@ -194,7 +195,7 @@ export default function Navbar() {
       {/* Mobile drawer (< lg) */}
       <div
         id="mobile-menu"
-        className={`lg:hidden overflow-hidden transition-all duration-300 ease-in-out ${
+        className={`xl:hidden overflow-hidden transition-all duration-300 ease-in-out ${
           open ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
         } bg-black border-t border-white/10`}
       >
@@ -207,6 +208,7 @@ export default function Navbar() {
                 if (href === '#home') {
                   e.preventDefault();
                   setOpen(false);
+                  window.history.pushState("", document.title, window.location.pathname + window.location.search);
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                   return;
                 }

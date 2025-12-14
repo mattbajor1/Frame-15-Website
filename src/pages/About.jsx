@@ -42,7 +42,7 @@ const team = [
   },
   {
     name: 'Jonas Spaulding',
-    role: 'Cinematographer & Rigging Engineer',
+    role: 'Director & Rigging Engineer',
     roleWord: 'RIGGING',
     photo: '/images/Frame15_Profiles_Jonas.jpg',
     bio: `Jonas makes motion possible. If the shot seems impossible, he is already sketching the rig. From custom builds to safe and repeatable moves, Jonas engineers pathways for the camera to feel weightless. His approach on cinematography keeps the focus on the story, so every technical choice serves the creative goal. Whether he is designing a high speed tracking shot or rigging for an unconventional angle, Jonas blends innovation with safety and expands what is possible on set.`,
@@ -230,9 +230,8 @@ export default function About() {
                 <button
                   key={m.name}
                   onClick={() => setSelected(m)}
-                  className={`w-12 h-12 rounded-full border-2 overflow-hidden transition ${
-                    m.name === selected.name ? 'border-yellow-500' : 'border-white/70'
-                  }`}
+                  className={`w-12 h-12 rounded-full border-2 overflow-hidden transition ${m.name === selected.name ? 'border-yellow-500' : 'border-white/70'
+                    }`}
                   aria-label={`Open profile for ${m.name}`}
                   title={m.name}
                 >
