@@ -280,7 +280,7 @@ export default function OurWork() {
                         {active.id === 'video' && (
                           <div className="mt-8 flex justify-center">
                             <a
-                              href="https://vimeo.com/frame15"
+                              href="https://vimeo.com/user242994295?fl=pp&fe=sh"
                               target="_blank"
                               rel="noreferrer"
                               className="inline-flex items-center gap-2 px-8 py-3 rounded-full bg-white text-black font-display font-bold uppercase tracking-wide hover:bg-yellow-500 transition-colors shadow-lg hover:shadow-yellow-500/20"
@@ -323,8 +323,8 @@ export default function OurWork() {
                         onClick={() => !isActive && setExpanded(s.id)}
                         disabled={isActive || closing}
                         className={`relative rounded-lg overflow-hidden border text-left transform-gpu transition-transform duration-300 ${isActive
-                            ? 'border-white/20 opacity-50 cursor-default'
-                            : 'border-white/10 hover:scale-[1.02]'
+                          ? 'border-white/20 opacity-50 cursor-default'
+                          : 'border-white/10 hover:scale-[1.02]'
                           }`}
                         style={{
                           backgroundImage: bgUrl(s.bgImage),

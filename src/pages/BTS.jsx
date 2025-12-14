@@ -164,7 +164,7 @@ export default function BTS({
           <button
             onClick={prev}
             disabled={idx === 0}
-            className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-40"
+            className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white backdrop-blur border border-white/20 hover:bg-yellow-500 hover:text-black hover:border-yellow-500 transition disabled:opacity-0"
             aria-label="Previous"
           >
             <FiChevronLeft className="h-7 w-7" />
@@ -172,22 +172,18 @@ export default function BTS({
           <button
             onClick={next}
             disabled={idx === ordered.length - 1}
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-40"
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white backdrop-blur border border-white/20 hover:bg-yellow-500 hover:text-black hover:border-yellow-500 transition disabled:opacity-0"
             aria-label="Next"
           >
             <FiChevronRight className="h-7 w-7" />
           </button>
         </div>
 
-        {/* Film-strip thumbnails */}
-        <div className="mt-4 relative">
-          {/* decorative perforations */}
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-2 bg-[radial-gradient(circle,rgba(255,255,255,0.12)_2px,transparent_3px)] bg-[size:28px_8px] bg-repeat-x" />
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2 bg-[radial-gradient(circle,rgba(255,255,255,0.12)_2px,transparent_3px)] bg-[size:28px_8px] bg-repeat-x" />
-
+        {/* Thumbnails */}
+        <div className="mt-8 relative">
           <div
             ref={railRef}
-            className="relative w-full overflow-x-auto whitespace-nowrap rounded-xl border border-white/10 bg-white/5 py-3 px-2 scrollbar-thin scrollbar-thumb-white/20"
+            className="relative w-full overflow-x-auto whitespace-nowrap py-4 scrollbar-hide"
           >
             {ordered.map((it, i) => {
               const active = i === idx;
@@ -199,9 +195,11 @@ export default function BTS({
                   key={it.public_id || i}
                   data-thumb={i}
                   onClick={() => setIdx(i)}
-                  className={`relative inline-block mr-2 last:mr-0 rounded-lg overflow-hidden border transition
-                    ${active ? "border-white shadow" : "border-white/10 hover:border-white/40"}`}
-                  style={{ width: 220, height: 124 }}
+                  className={`relative inline-block mr-3 last:mr-0 rounded-lg overflow-hidden border-2 transition-all duration-200 transform
+                    ${active
+                      ? "border-yellow-500 scale-105 shadow-[0_0_15px_rgba(234,179,8,0.3)]"
+                      : "border-transparent opacity-60 hover:opacity-100 hover:scale-[1.02]"}`}
+                  style={{ width: 200, height: 112 }}
                   aria-label={`Preview ${i + 1}`}
                 >
                   <img
@@ -210,13 +208,15 @@ export default function BTS({
                     className="h-full w-full object-cover"
                     loading="lazy"
                     decoding="async"
-                    width={220}
-                    height={124}
+                    width={200}
+                    height={112}
                   />
                   {it.type === "video" && (
-                    <span className="absolute bottom-1 right-1 text-[10px] px-2 py-0.5 rounded bg-black/70">
-                      VIDEO
-                    </span>
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                      <div className="w-8 h-8 rounded-full bg-black/60 flex items-center justify-center backdrop-blur-sm">
+                        <div className="w-0 h-0 border-t-[5px] border-t-transparent border-l-[8px] border-l-white border-b-[5px] border-b-transparent ml-1"></div>
+                      </div>
+                    </div>
                   )}
                 </button>
               );
@@ -227,7 +227,7 @@ export default function BTS({
               Array.from({ length: 6 }).map((_, i) => (
                 <div
                   key={`sk-${i}`}
-                  className="inline-block mr-2 w-[220px] h-[124px] rounded-lg bg-white/5 animate-pulse"
+                  className="inline-block mr-3 w-[200px] h-[112px] rounded-lg bg-white/10 animate-pulse"
                 />
               ))}
           </div>
