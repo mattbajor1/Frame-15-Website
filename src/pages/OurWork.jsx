@@ -15,9 +15,9 @@ const services = [
     bgImage: '/images/MAD_COW_BTS.jpg',
     work: [
       { title: 'Benztown IEX', vimeoEmbed: 'https://player.vimeo.com/video/1107849616?h=5f03988a11&title=0&byline=0&portrait=0' },
-      { title: 'Scout & Griffin', vimeoEmbed: 'https://player.vimeo.com/video/1107827897?title=0&byline=0&portrait=0' },
+      { title: 'Camp Pugh', vimeoEmbed: 'https://player.vimeo.com/video/1107827897?title=0&byline=0&portrait=0' },
       { title: 'Trailside Museum and Zoo', vimeoEmbed: 'https://player.vimeo.com/video/1107829998?title=0&byline=0&portrait=0' },
-      { title: 'Big Jay Preview', vimeoEmbed: 'https://player.vimeo.com/video/1097613407?h=1f7c7d8c30&title=0&byline=0&portrait=0' },
+      { title: 'Renoun Skis', vimeoEmbed: 'https://player.vimeo.com/video/1097613407?h=1f7c7d8c30&title=0&byline=0&portrait=0' },
     ],
   },
   {
